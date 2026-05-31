@@ -1,41 +1,63 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CTAButton } from "@/components/cta-button";
 import { SectionHeading } from "@/components/section-heading";
-import { menuItems, restaurant } from "@/lib/restaurant-data";
-
-const initialBasket = menuItems.slice(0, 3).map((item, index) => ({
-  ...item,
-  quantity: index === 0 ? 2 : 1
-}));
+import { clearCart, getCartItems, getCartSubtotal, updateCartItemQuantity, type CartItem } from "@/lib/cart";
+import { restaurant } from "@/lib/restaurant-data";
 
 const orderModes = ["Dine-in", "Pickup", "Kerbside Pickup", "Delivery"] as const;
 
 type OrderMode = (typeof orderModes)[number];
 
 export default function OrderPage() {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [hasLoadedCart, setHasLoadedCart] = useState(false);
   const [orderMode, setOrderMode] = useState<OrderMode>("Pickup");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
 
-  const subtotal = useMemo(
-    () => initialBasket.reduce((total, item) => total + item.priceFrom * item.quantity, 0),
-    []
-  );
+  useEffect(() => {
+    setCartItems(getCartItems());
+    setHasLoadedCart(true);
+
+    function syncCart() {
+      setCartItems(getCartItems());
+    }
+
+    window.addEventListener("chiqngrill-cart-updated", syncCart);
+    window.addEventListener("storage", syncCart);
+
+    return () => {
+      window.removeEventListener("chiqngrill-cart-updated", syncCart);
+      window.removeEventListener("storage", syncCart);
+    };
+  }, []);
+
+  const subtotal = useMemo(() => getCartSubtotal(cartItems), [cartItems]);
+  const isCartEmpty = hasLoadedCart && cartItems.length === 0;
+
+  function handleQuantityChange(itemId: string, quantity: number) {
+    setCartItems(updateCartItemQuantity(itemId, quantity));
+  }
+
+  function handleClearCart() {
+    clearCart();
+    setCartItems([]);
+  }
 
   const orderSummary = useMemo(() => {
-    const itemLines = initialBasket
+    const itemLines = cartItems
       .map((item) => `${item.quantity}x ${item.name} - GH₵${item.priceFrom * item.quantity}`)
       .join("%0A");
 
     const addressLine = orderMode === "Delivery" ? `%0ADelivery Address: ${encodeURIComponent(address || "Not provided")}` : "";
     const notesLine = notes ? `%0ANotes: ${encodeURIComponent(notes)}` : "";
 
-    return `${restaurant.whatsappUrl}%0A%0AName: ${encodeURIComponent(name || "Customer")}%0APhone: ${encodeURIComponent(phone || "Not provided")}%0AOrder Mode: ${encodeURIComponent(orderMode)}${addressLine}%0A%0AItems:%0A${itemLines}%0A%0ASubtotal: GH₵${subtotal}${notesLine}`;
-  }, [address, name, notes, orderMode, phone, subtotal]);
+    return `${restaurant.whatsappUrl}%0A%0AName: ${encodeURIComponent(name || "Customer")}%0APhone: ${encodeURIComponent(phone || "Not provided")}%0AOrder Mode: ${encodeURIComponent(orderMode)}${addressLine}%0A%0AItems:%0A${itemLines || "No items selected"}%0A%0ASubtotal: GH₵${subtotal}${notesLine}`;
+  }, [address, cartItems, name, notes, orderMode, phone, subtotal]);
 
   return (
     <main className="min-h-screen bg-charcoal text-cream">
@@ -55,23 +77,60 @@ export default function OrderPage() {
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-16 md:grid-cols-[0.9fr_1.1fr] md:py-24">
         <div>
           <SectionHeading
-            eyebrow="Order preview"
-            title="Build the order flow before the backend."
-            description="This is the first app-like checkout layer. It prepares the customer journey, then sends the order through WhatsApp until database ordering is added."
+            eyebrow="Your basket"
+            title="Review your meal before checkout."
+            description="Items added from the menu appear here. Update quantities, choose how you want to receive your meal, then send the order through WhatsApp."
           />
           <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-            <p className="text-sm font-black uppercase tracking-[0.25em] text-gold">Basket</p>
-            <div className="mt-5 space-y-4">
-              {initialBasket.map((item) => (
-                <div key={item.id} className="flex items-start justify-between gap-4 rounded-3xl border border-white/10 bg-black/20 p-4">
-                  <div>
-                    <p className="font-black">{item.quantity}x {item.name}</p>
-                    <p className="mt-1 text-sm text-cream/60">{item.category} · {item.prepTime}</p>
-                  </div>
-                  <p className="font-black text-gold">GH₵{item.priceFrom * item.quantity}</p>
-                </div>
-              ))}
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-gold">Basket</p>
+              {cartItems.length > 0 ? (
+                <button type="button" onClick={handleClearCart} className="text-sm font-bold text-cream/50 hover:text-flame">
+                  Clear cart
+                </button>
+              ) : null}
             </div>
+
+            {isCartEmpty ? (
+              <div className="mt-5 rounded-3xl border border-white/10 bg-black/20 p-6 text-center">
+                <h2 className="text-2xl font-black">Your cart is empty.</h2>
+                <p className="mt-2 text-sm leading-6 text-cream/60">Add meals from the menu to start your order.</p>
+                <div className="mt-5">
+                  <CTAButton href="/menu" variant="flame">Browse Menu</CTAButton>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-5 space-y-4">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="grid gap-4 rounded-3xl border border-white/10 bg-black/20 p-4 md:grid-cols-[1fr_auto] md:items-center">
+                    <div>
+                      <p className="font-black">{item.name}</p>
+                      <p className="mt-1 text-sm text-cream/60">{item.category} · {item.prepTime}</p>
+                      <p className="mt-2 text-sm font-bold text-gold">GH₵{item.priceFrom} each</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 md:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                        className="grid size-10 place-items-center rounded-full border border-white/10 font-black hover:border-gold hover:text-gold"
+                      >
+                        −
+                      </button>
+                      <span className="min-w-8 text-center font-black">{item.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                        className="grid size-10 place-items-center rounded-full border border-white/10 font-black hover:border-gold hover:text-gold"
+                      >
+                        +
+                      </button>
+                      <p className="min-w-20 text-right font-black text-gold">GH₵{item.priceFrom * item.quantity}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-5 text-xl font-black">
               <span>Subtotal</span>
               <span>GH₵{subtotal}</span>
@@ -124,10 +183,12 @@ export default function OrderPage() {
           </div>
 
           <a
-            href={orderSummary}
-            className="mt-7 block rounded-full bg-flame px-7 py-4 text-center font-black text-charcoal transition hover:bg-gold"
+            href={isCartEmpty ? "/menu" : orderSummary}
+            className={`mt-7 block rounded-full px-7 py-4 text-center font-black transition ${
+              isCartEmpty ? "bg-charcoal text-cream hover:bg-flame hover:text-charcoal" : "bg-flame text-charcoal hover:bg-gold"
+            }`}
           >
-            Send Order on WhatsApp
+            {isCartEmpty ? "Add Items First" : "Send Order on WhatsApp"}
           </a>
           <p className="mt-4 text-center text-sm text-charcoal/55">
             MVP checkout only. Backend order saving and Paystack payment come next.
