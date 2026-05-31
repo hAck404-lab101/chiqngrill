@@ -14,6 +14,7 @@ Create a consistent navigation system across the Chiq-N-Grill web app so custome
 - Active route highlighting is implemented with `usePathname`.
 - Mobile menu drawer is implemented with local component state.
 - Mobile drawer includes page links plus quick cart/call or kitchen/admin CTAs.
+- Mobile drawer now animates using Tailwind transition utilities.
 
 ## Files Changed
 
@@ -36,13 +37,14 @@ Create a consistent navigation system across the Chiq-N-Grill web app so custome
 - Keep page-specific CTAs inside the page body.
 - Keep shared links inside the header component.
 - Add new global page links only in `components/app-header.tsx`.
+- Drawer animation uses grid row expansion plus opacity/scale/translate transitions.
 
 ## Testing Notes
 
 - Check customer navigation links.
 - Check operations navigation links.
 - Check active route highlighting.
-- Check mobile menu opens and closes.
+- Check mobile menu opens and closes smoothly.
 - Check mobile drawer links navigate correctly.
 - Check mobile header spacing.
 - Check call and cart CTAs.
@@ -50,5 +52,4 @@ Create a consistent navigation system across the Chiq-N-Grill web app so custome
 
 ## Known Issues
 
-- Mobile drawer has no animation yet.
 - Active route highlighting uses pathname only and does not handle query-specific states.
