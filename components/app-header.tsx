@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import { CTAButton } from "@/components/cta-button";
 import { restaurant } from "@/lib/restaurant-data";
 
@@ -26,15 +26,36 @@ const adminLinks = [
   { label: "Orders", href: "/order" }
 ];
 
-function isActivePath(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
+function getPathAndQuery(href: string) {
+  const [path = "/", query = ""] = href.split("?");
+  return { path, query };
+}
+
+function queryContainsRequiredParams(currentQuery: URLSearchParams, requiredQuery: string) {
+  if (!requiredQuery) return true;
+
+  const requiredParams = new URLSearchParams(requiredQuery);
+
+  for (const [key, value] of requiredParams.entries()) {
+    if (currentQuery.get(key) !== value) return false;
+  }
+
+  return true;
+}
+
+function isActivePath(pathname: string, searchParams: URLSearchParams, href: string) {
+  const { path, query } = getPathAndQuery(href);
+  const matchesPath = path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
+
+  return matchesPath && queryContainsRequiredParams(searchParams, query);
 }
 
 export function AppHeader({ variant = "customer" }: AppHeaderProps) {
   const isAdmin = variant === "admin";
   const links = isAdmin ? adminLinks : customerLinks;
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeSearchParams = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -46,7 +67,7 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
 
         <div className="hidden items-center gap-5 text-sm text-cream/75 lg:flex">
           {links.map((link) => {
-            const active = isActivePath(pathname, link.href);
+            const active = isActivePath(pathname, activeSearchParams, link.href);
             return (
               <a key={link.href} href={link.href} className={`rounded-full px-3 py-2 transition ${active ? "bg-gold/15 text-gold" : "hover:text-gold"}`}>
                 {link.label}
@@ -94,7 +115,7 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
             }`}
           >
             {links.map((link) => {
-              const active = isActivePath(pathname, link.href);
+              const active = isActivePath(pathname, activeSearchParams, link.href);
               return (
                 <a
                   key={link.href}
