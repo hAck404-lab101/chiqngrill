@@ -1,3 +1,4 @@
+import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CTAButton } from "@/components/cta-button";
 import { SectionHeading } from "@/components/section-heading";
 import { categories, menuItems, restaurant } from "@/lib/restaurant-data";
@@ -13,6 +14,7 @@ export default function MenuPage() {
             Chiq-N-Grill
           </a>
           <div className="flex items-center gap-3">
+            <CTAButton href="/order" variant="outline">Cart</CTAButton>
             <CTAButton href={restaurant.phoneHref} variant="flame">Call</CTAButton>
           </div>
         </nav>
@@ -23,15 +25,15 @@ export default function MenuPage() {
           <SectionHeading
             eyebrow="Digital menu"
             title="Explore the grill before you order."
-            description="Browse customer-loved chicken combos, rice meals, fries, smoky options, and quick cravings."
+            description="Browse customer-loved chicken combos, rice meals, fries, smoky options, and quick cravings. Add meals to cart, then checkout through WhatsApp."
           />
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
             <p className="text-sm font-bold uppercase tracking-[0.25em] text-gold">Ordering mode</p>
             <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
               {['Dine-in', 'Pickup', 'Delivery', 'Kerbside'].map((mode) => (
-                <button key={mode} className="rounded-full border border-white/10 px-4 py-3 text-sm font-bold text-cream/80 transition hover:border-gold hover:text-gold">
+                <a key={mode} href="/order" className="rounded-full border border-white/10 px-4 py-3 text-center text-sm font-bold text-cream/80 transition hover:border-gold hover:text-gold">
                   {mode}
-                </button>
+                </a>
               ))}
             </div>
           </div>
@@ -68,12 +70,7 @@ export default function MenuPage() {
                         <span>From GH₵{item.priceFrom}</span>
                         <span>{item.prepTime}</span>
                       </div>
-                      <a
-                        href={`${restaurant.whatsappUrl}%20Meal%3A%20${encodeURIComponent(item.name)}`}
-                        className="mt-5 block rounded-full bg-cream px-5 py-3 text-center text-sm font-black text-charcoal transition hover:bg-gold"
-                      >
-                        Add via WhatsApp
-                      </a>
+                      <AddToCartButton item={item} />
                     </article>
                   ))}
               </div>
