@@ -8,22 +8,24 @@ Create a realistic order tracking experience for Chiq-N-Grill so customers can u
 
 1. Customer places an order through WhatsApp or future backend checkout.
 2. Customer opens `/track`.
-3. Customer enters or views an order reference.
-4. Customer sees a clear timeline of order progress.
-5. Customer can call the restaurant or return to the menu.
+3. Customer enters an order reference.
+4. Customer clicks **Track Order**.
+5. Customer sees a clear status card and timeline of order progress.
+6. Customer can call the restaurant or return to checkout/menu.
 
 ## Current MVP Behavior
 
-- Static tracking UI.
+- Interactive client-side tracking preview.
 - No backend lookup yet.
-- Uses a sample order reference.
+- Uses a default sample order reference.
+- Allows user to enter a reference and update the visible tracking card.
+- Shows estimated ready time placeholder.
 - Shows a timeline with completed, active, and pending states.
 - Includes CTA to call restaurant.
 
 ## Files Changed
 
 - `app/track/page.tsx`
-- `app/order/page.tsx`
 - `docs/features/order-tracking.md`
 
 ## Database/API Changes
@@ -58,13 +60,16 @@ Suggested order statuses:
 - Public tracking should use order reference plus phone verification when backend is added.
 - Admin status updates must require authentication.
 - Rate-limit tracking lookup requests.
+- Avoid revealing too much information for random order references.
 
 ## Testing Notes
 
 - Confirm tracking page loads.
+- Confirm order reference input accepts text.
+- Confirm Track Order updates the visible reference.
 - Confirm status timeline renders.
 - Confirm call CTA works.
-- Confirm menu CTA works.
+- Confirm checkout/menu navigation works.
 - Confirm mobile layout is readable.
 
 ## Known Issues
