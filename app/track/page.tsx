@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { CTAButton } from "@/components/cta-button";
 import { SectionHeading } from "@/components/section-heading";
 import { restaurant } from "@/lib/restaurant-data";
@@ -29,7 +32,23 @@ const trackingSteps = [
   }
 ];
 
+function normalizeReference(value: string) {
+  return value.trim().toUpperCase() || "CNG-20260531-0001";
+}
+
 export default function TrackPage() {
+  const [referenceInput, setReferenceInput] = useState("");
+  const [trackedReference, setTrackedReference] = useState("CNG-20260531-0001");
+
+  const estimatedReadyTime = useMemo(() => {
+    return trackedReference.endsWith("0001") ? "20–30 minutes" : "Confirm with restaurant";
+  }, [trackedReference]);
+
+  function handleTrackOrder(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setTrackedReference(normalizeReference(referenceInput));
+  }
+
   return (
     <main className="min-h-screen bg-charcoal text-cream">
       <div className="noise-overlay" />
@@ -50,14 +69,35 @@ export default function TrackPage() {
           <SectionHeading
             eyebrow="Order tracking"
             title="Track the heat from kitchen to table."
-            description="This page prepares the future live tracking experience. For the MVP, customers can use it as a clean order status reference after WhatsApp checkout."
+            description="Enter an order reference to preview the tracking experience. Backend lookup will later connect this page to real order statuses."
           />
-          <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
-            <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Sample reference</p>
-            <h2 className="mt-3 text-3xl font-black">CNG-20260531-0001</h2>
-            <p className="mt-3 text-sm leading-6 text-cream/60">
-              Backend lookup will later allow customers to enter their real order reference and phone number.
+
+          <form onSubmit={handleTrackOrder} className="mt-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+            <label className="grid gap-2 text-sm font-bold text-cream/75">
+              Order reference
+              <input
+                value={referenceInput}
+                onChange={(event) => setReferenceInput(event.target.value)}
+                className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-cream outline-none placeholder:text-cream/35 focus:border-gold"
+                placeholder="Example: CNG-20260531-0001"
+              />
+            </label>
+            <button type="submit" className="mt-5 w-full rounded-full bg-flame px-6 py-4 font-black text-charcoal transition hover:bg-gold">
+              Track Order
+            </button>
+            <p className="mt-4 text-sm leading-6 text-cream/60">
+              For production, this should require order reference plus phone verification to protect customer privacy.
             </p>
+          </form>
+
+          <div className="mt-5 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+            <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Current reference</p>
+            <h2 className="mt-3 text-3xl font-black">{trackedReference}</h2>
+            <div className="mt-5 grid gap-3 text-sm text-cream/70">
+              <p>Status: Preparing your meal</p>
+              <p>Estimated ready time: {estimatedReadyTime}</p>
+              <p>Support: {restaurant.phone}</p>
+            </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <CTAButton href={restaurant.phoneHref} variant="flame">Call Restaurant</CTAButton>
               <CTAButton href="/order" variant="outline">Back to Checkout</CTAButton>
