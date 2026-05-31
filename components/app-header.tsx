@@ -82,9 +82,17 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
         </div>
       </nav>
 
-      {isOpen ? (
-        <div className="border-t border-white/10 bg-charcoal px-5 py-5 lg:hidden">
-          <div className="mx-auto grid max-w-7xl gap-3">
+      <div
+        className={`grid overflow-hidden border-t border-white/10 bg-charcoal transition-all duration-300 ease-out lg:hidden ${
+          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="min-h-0">
+          <div
+            className={`mx-auto grid max-w-7xl gap-3 px-5 py-5 transition duration-300 ease-out ${
+              isOpen ? "translate-y-0 scale-100 opacity-100" : "-translate-y-3 scale-[0.98] opacity-0"
+            }`}
+          >
             {links.map((link) => {
               const active = isActivePath(pathname, link.href);
               return (
@@ -112,7 +120,7 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
             </div>
           </div>
         </div>
-      ) : null}
+      </div>
     </header>
   );
 }
