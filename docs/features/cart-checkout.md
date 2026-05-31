@@ -2,27 +2,37 @@
 
 ## Purpose
 
-Add the first real web-app ordering layer for Chiq-N-Grill so customers can review a sample order, choose fulfillment mode, and submit through a WhatsApp fallback before backend storage is added.
+Add the first real web-app ordering layer for Chiq-N-Grill so customers can add meals from the menu, review their basket, choose fulfillment mode, and submit through a WhatsApp fallback before backend storage is added.
 
 ## User Flow
 
-1. Customer opens `/order`.
-2. Customer reviews selected items in the order basket.
-3. Customer chooses order mode: dine-in, pickup, kerbside pickup, or delivery.
-4. Customer enters name, phone, optional notes, and delivery address when needed.
-5. Customer sees subtotal and estimated service/delivery notes.
-6. Customer taps WhatsApp checkout.
-7. WhatsApp opens with a formatted order summary.
+1. Customer opens `/menu`.
+2. Customer taps **Add to Cart** on one or more menu items.
+3. Cart items are saved in browser local storage.
+4. Customer opens `/order`.
+5. Customer reviews selected items in the order basket.
+6. Customer increases, decreases, removes, or clears items.
+7. Customer chooses order mode: dine-in, pickup, kerbside pickup, or delivery.
+8. Customer enters name, phone, optional notes, and delivery address when needed.
+9. Customer sees subtotal and estimated service/delivery notes.
+10. Customer taps WhatsApp checkout.
+11. WhatsApp opens with a formatted order summary.
 
 ## Current MVP Behavior
 
-- Cart is a guided static MVP, not persistent yet.
-- The initial basket uses selected menu items from `lib/restaurant-data.ts`.
-- The checkout form uses client-side state.
+- Cart uses browser local storage through `lib/cart.ts`.
+- Menu cards use `components/add-to-cart-button.tsx`.
+- The `/order` page reads the live cart instead of a sample basket.
+- Customers can update quantities.
+- Quantity set below 1 removes the item.
+- Customers can clear the whole cart.
 - Submission goes through WhatsApp only.
 
 ## Files Changed
 
+- `lib/cart.ts`
+- `components/add-to-cart-button.tsx`
+- `app/menu/page.tsx`
 - `app/order/page.tsx`
 - `docs/features/cart-checkout.md`
 
@@ -40,7 +50,8 @@ Future backend tables:
 
 ## Security Notes
 
-- Current MVP does not store customer data.
+- Current MVP does not store customer data on a server.
+- Local storage cart data is for convenience only, not trusted business data.
 - When backend is added, validate all form fields server-side.
 - Do not trust frontend totals.
 - Recalculate prices server-side before payment.
@@ -48,7 +59,14 @@ Future backend tables:
 
 ## Testing Notes
 
-- Confirm order page loads.
+- Confirm menu page loads.
+- Confirm Add to Cart writes item to local cart.
+- Confirm `/order` shows added items.
+- Confirm quantity increase works.
+- Confirm quantity decrease works.
+- Confirm item removes when quantity reaches 0.
+- Confirm clear cart works.
+- Confirm empty cart state works.
 - Confirm order modes display correctly.
 - Confirm WhatsApp message contains customer details, order mode, items, and total.
 - Confirm delivery mode asks for address.
@@ -56,7 +74,7 @@ Future backend tables:
 
 ## Known Issues
 
-- Cart is not persistent yet.
+- Cart persists only in the same browser/device.
 - No backend order storage yet.
 - No Paystack payment yet.
 - No real-time order tracking yet.
