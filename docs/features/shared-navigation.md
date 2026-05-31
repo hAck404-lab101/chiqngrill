@@ -11,10 +11,11 @@ Create a consistent navigation system across the Chiq-N-Grill web app so custome
 - Operations pages use `variant="admin"`.
 - Customer navigation links to menu, order, reservations, deals, tracking, gallery, and delivery.
 - Operations navigation links to admin, kitchen, menu, and order views.
-- Active route highlighting is implemented with `usePathname`.
+- Active route highlighting is implemented with `usePathname` and `useSearchParams`.
+- Active route matching now supports links with required query parameters.
 - Mobile menu drawer is implemented with local component state.
 - Mobile drawer includes page links plus quick cart/call or kitchen/admin CTAs.
-- Mobile drawer now animates using Tailwind transition utilities.
+- Mobile drawer animates using Tailwind transition utilities.
 
 ## Files Changed
 
@@ -38,12 +39,15 @@ Create a consistent navigation system across the Chiq-N-Grill web app so custome
 - Keep shared links inside the header component.
 - Add new global page links only in `components/app-header.tsx`.
 - Drawer animation uses grid row expansion plus opacity/scale/translate transitions.
+- Query-aware active matching parses links with `?key=value` and checks the current search params.
+- Normal path-only links still work as before.
 
 ## Testing Notes
 
 - Check customer navigation links.
 - Check operations navigation links.
-- Check active route highlighting.
+- Check active route highlighting on normal routes.
+- Check active route highlighting for future query-based links.
 - Check mobile menu opens and closes smoothly.
 - Check mobile drawer links navigate correctly.
 - Check mobile header spacing.
@@ -52,4 +56,4 @@ Create a consistent navigation system across the Chiq-N-Grill web app so custome
 
 ## Known Issues
 
-- Active route highlighting uses pathname only and does not handle query-specific states.
+- No known navigation issues in the current MVP.
