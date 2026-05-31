@@ -2,28 +2,39 @@
 
 ## Purpose
 
-Create an app-like digital menu that helps customers browse Chiq-N-Grill meals and move quickly into ordering.
+Create an app-like digital menu that helps customers browse Chiq-N-Grill meals, filter quickly, add items to cart, and move into checkout.
 
 ## User Flow
 
 1. Customer opens `/menu`.
-2. Customer selects a category.
-3. Customer reviews item description, price, spice level, and prep time.
-4. Customer taps an order CTA.
-5. MVP sends customer to WhatsApp with a pre-filled order message.
+2. Customer searches by meal name, description, category, or badge.
+3. Customer filters by category, price range, spice level, or availability.
+4. Customer reviews item description, price, spice level, and prep time.
+5. Customer taps **Add to Cart**.
+6. Floating cart appears globally.
+7. Customer opens `/order` to checkout through WhatsApp.
 
 ## Current MVP Behavior
 
 - Menu data is stored in `lib/restaurant-data.ts`.
-- Menu page groups meals by category.
-- Each meal card shows price, spice level, prep time, badge, and WhatsApp CTA.
-- Ordering is not yet a full cart system.
+- Menu browsing is handled by `components/menu-browser.tsx`.
+- Customers can search menu items.
+- Customers can filter by category.
+- Customers can filter by price range.
+- Customers can filter by spice level.
+- Customers can filter by availability.
+- Customers can reset filters.
+- Empty search/filter state is handled.
+- Each meal card shows price, spice level, prep time, badge, and Add to Cart CTA.
+- Cart uses local storage and checkout remains WhatsApp-based for MVP.
 
 ## Files Changed
 
 - `lib/restaurant-data.ts`
 - `components/section-heading.tsx`
 - `components/cta-button.tsx`
+- `components/add-to-cart-button.tsx`
+- `components/menu-browser.tsx`
 - `app/page.tsx`
 - `app/menu/page.tsx`
 
@@ -40,20 +51,27 @@ Future backend tables:
 
 ## Security Notes
 
-- No user input is stored yet.
-- WhatsApp ordering is client-side only for MVP.
+- No menu user input is stored on a server yet.
+- Search/filter state is client-side only.
+- Cart local storage is convenience data only and must not be trusted for final order totals.
 - When backend is added, prices must be recalculated server-side.
 
 ## Testing Notes
 
 - Check menu page loads.
-- Check category links scroll correctly.
-- Check WhatsApp CTA opens with the selected meal.
+- Check search works for names, descriptions, categories, and badges.
+- Check category filter works.
+- Check price filter works.
+- Check spice filter works.
+- Check availability checkbox works.
+- Check reset filters works.
+- Check empty state displays when no items match.
+- Check Add to Cart works from filtered results.
 - Check responsive layout.
 - Check all prices and labels are correct.
 
 ## Known Issues
 
 - Real food images are not yet added.
-- Search and filters are not yet added.
-- Cart and checkout are not yet added.
+- Cart and checkout are local-only until backend is added.
+- No admin menu editing yet.
