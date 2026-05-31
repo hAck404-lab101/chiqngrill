@@ -9,19 +9,22 @@ Add the first real web-app ordering layer for Chiq-N-Grill so customers can add 
 1. Customer opens `/menu`.
 2. Customer taps **Add to Cart** on one or more menu items.
 3. Cart items are saved in browser local storage.
-4. Customer opens `/order`.
-5. Customer reviews selected items in the order basket.
-6. Customer increases, decreases, removes, or clears items.
-7. Customer chooses order mode: dine-in, pickup, kerbside pickup, or delivery.
-8. Customer enters name, phone, optional notes, and delivery address when needed.
-9. Customer sees subtotal and estimated service/delivery notes.
-10. Customer taps WhatsApp checkout.
-11. WhatsApp opens with a formatted order summary.
+4. A floating cart indicator appears globally when cart has items.
+5. Customer taps the floating cart or opens `/order`.
+6. Customer reviews selected items in the order basket.
+7. Customer increases, decreases, removes, or clears items.
+8. Customer chooses order mode: dine-in, pickup, kerbside pickup, or delivery.
+9. Customer enters name, phone, optional notes, and delivery address when needed.
+10. Customer sees subtotal and estimated service/delivery notes.
+11. Customer taps WhatsApp checkout.
+12. WhatsApp opens with a formatted order summary.
 
 ## Current MVP Behavior
 
 - Cart uses browser local storage through `lib/cart.ts`.
 - Menu cards use `components/add-to-cart-button.tsx`.
+- A global floating cart indicator is rendered from `app/layout.tsx`.
+- The floating cart shows item count and subtotal.
 - The `/order` page reads the live cart instead of a sample basket.
 - Customers can update quantities.
 - Quantity set below 1 removes the item.
@@ -32,6 +35,8 @@ Add the first real web-app ordering layer for Chiq-N-Grill so customers can add 
 
 - `lib/cart.ts`
 - `components/add-to-cart-button.tsx`
+- `components/floating-cart.tsx`
+- `app/layout.tsx`
 - `app/menu/page.tsx`
 - `app/order/page.tsx`
 - `docs/features/cart-checkout.md`
@@ -61,6 +66,9 @@ Future backend tables:
 
 - Confirm menu page loads.
 - Confirm Add to Cart writes item to local cart.
+- Confirm floating cart appears after adding item.
+- Confirm floating cart shows correct item count and subtotal.
+- Confirm floating cart links to `/order`.
 - Confirm `/order` shows added items.
 - Confirm quantity increase works.
 - Confirm quantity decrease works.
