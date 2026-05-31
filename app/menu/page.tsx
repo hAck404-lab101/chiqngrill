@@ -1,24 +1,13 @@
-import { CTAButton } from "@/components/cta-button";
+import { AppHeader } from "@/components/app-header";
 import { MenuBrowser } from "@/components/menu-browser";
 import { SectionHeading } from "@/components/section-heading";
-import { categories, menuItems, restaurant } from "@/lib/restaurant-data";
+import { categories, menuItems } from "@/lib/restaurant-data";
 
 export default function MenuPage() {
   return (
     <main className="min-h-screen bg-charcoal text-cream">
       <div className="noise-overlay" />
-
-      <header className="border-b border-white/10 bg-charcoal/90 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <a href="/" className="text-sm font-black uppercase tracking-[0.28em] text-gold">
-            Chiq-N-Grill
-          </a>
-          <div className="flex items-center gap-3">
-            <CTAButton href="/order" variant="outline">Cart</CTAButton>
-            <CTAButton href={restaurant.phoneHref} variant="flame">Call</CTAButton>
-          </div>
-        </nav>
-      </header>
+      <AppHeader />
 
       <section className="mx-auto max-w-7xl px-5 py-16 md:py-24">
         <div className="grid gap-10 md:grid-cols-[0.85fr_1.15fr] md:items-end">
