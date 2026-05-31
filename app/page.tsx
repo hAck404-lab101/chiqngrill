@@ -4,6 +4,15 @@ import { menuItems, restaurant, reviewHighlights, serviceBadges } from "@/lib/re
 
 const featuredItems = menuItems.slice(0, 4);
 
+const appFeatures = [
+  { title: "Order Online", description: "Build a basket, choose pickup or delivery, and send your order through WhatsApp.", href: "/order" },
+  { title: "Reserve a Table", description: "Book dine-in moments for birthdays, dates, friends, and relaxed hangouts.", href: "/reservations" },
+  { title: "Deals & Rewards", description: "Explore promo concepts and the future Chiq Points loyalty experience.", href: "/deals" },
+  { title: "Track Order", description: "Preview the order-status journey from kitchen to table.", href: "/track" },
+  { title: "Delivery Zones", description: "Check delivery ranges, estimated fees, and area notes before checkout.", href: "/delivery" },
+  { title: "Food Gallery", description: "A visual-first space for food, interiors, drinks, and customer vibe shots.", href: "/gallery" }
+];
+
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-charcoal text-cream">
@@ -14,11 +23,12 @@ export default function Home() {
           <a href="#home" className="text-lg font-black tracking-[0.28em] text-cream">
             CNG
           </a>
-          <div className="hidden items-center gap-8 text-sm text-cream/75 md:flex">
+          <div className="hidden items-center gap-6 text-sm text-cream/75 md:flex">
             <a href="/menu" className="hover:text-gold">Menu</a>
-            <a href="#experience" className="hover:text-gold">Experience</a>
-            <a href="#reviews" className="hover:text-gold">Reviews</a>
-            <a href="#location" className="hover:text-gold">Location</a>
+            <a href="/order" className="hover:text-gold">Order</a>
+            <a href="/reservations" className="hover:text-gold">Reserve</a>
+            <a href="/deals" className="hover:text-gold">Deals</a>
+            <a href="/track" className="hover:text-gold">Track</a>
           </div>
           <a
             href={restaurant.phoneHref}
@@ -42,6 +52,7 @@ export default function Home() {
           </p>
           <div className="mt-9 flex flex-col gap-4 sm:flex-row">
             <CTAButton href="/menu">View Menu</CTAButton>
+            <CTAButton href="/order" variant="flame">Start Order</CTAButton>
             <CTAButton href={restaurant.mapsUrl} variant="outline" external>
               Get Directions
             </CTAButton>
@@ -72,8 +83,8 @@ export default function Home() {
       <section id="menu" className="mx-auto max-w-7xl px-5 py-20">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading eyebrow="Customer-loved favorites" title="Made hot. Served bold." />
-          <CTAButton href={restaurant.phoneHref} variant="gold">
-            Call {restaurant.phone}
+          <CTAButton href="/menu" variant="gold">
+            Browse Full Menu
           </CTAButton>
         </div>
 
@@ -93,6 +104,22 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-7xl px-5 py-20">
+        <SectionHeading
+          eyebrow="Web app features"
+          title="More than a restaurant website."
+          description="The experience is structured like a real food-ordering web app, with ordering, tracking, reservations, promos, delivery info, and operations screens ready for backend integration."
+        />
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+          {appFeatures.map((feature) => (
+            <a key={feature.href} href={feature.href} className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 transition hover:-translate-y-1 hover:border-gold/40 hover:bg-white/[0.07]">
+              <h3 className="text-2xl font-black">{feature.title}</h3>
+              <p className="mt-3 leading-7 text-cream/65">{feature.description}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+
       <section id="experience" className="mx-auto max-w-7xl px-5 py-20">
         <div className="rounded-[2.5rem] border border-white/10 bg-cream p-8 text-charcoal md:p-12">
           <p className="text-sm font-black uppercase tracking-[0.35em] text-flame">The experience</p>
@@ -101,7 +128,7 @@ export default function Home() {
             A relaxed grill house with good music, calm atmosphere, cold drinks, and flavorful meals made for friends, quick cravings, and weekend visits.
           </p>
           <div className="mt-9 grid gap-4 md:grid-cols-3">
-            {['Soothing music', 'Serene atmosphere', 'Freshly prepared meals'].map((item) => (
+            {["Soothing music", "Serene atmosphere", "Freshly prepared meals"].map((item) => (
               <div key={item} className="rounded-3xl border border-charcoal/10 bg-white p-5 font-black shadow-sm">
                 {item}
               </div>
@@ -141,7 +168,7 @@ export default function Home() {
             <h3 className="text-2xl font-black">Hungry now?</h3>
             <p className="mt-3 text-cream/70">Order your favorite meal or open directions before you move.</p>
             <div className="mt-6 flex flex-col gap-3">
-              <CTAButton href={restaurant.phoneHref} variant="flame">Call to Order</CTAButton>
+              <CTAButton href="/order" variant="flame">Start Order</CTAButton>
               <CTAButton href={restaurant.mapsUrl} variant="outline" external>Open Google Maps</CTAButton>
             </div>
           </div>
