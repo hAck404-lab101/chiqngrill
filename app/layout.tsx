@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { BottomNav } from "@/components/bottom-nav";
 import { FloatingCart } from "@/components/floating-cart";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         {children}
         <FloatingCart />
         <PWAInstallPrompt />
+        <BottomNav />
         <ServiceWorkerRegister />
       </body>
     </html>
