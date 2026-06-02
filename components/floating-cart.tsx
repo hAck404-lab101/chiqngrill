@@ -33,20 +33,20 @@ export function FloatingCart() {
     <Link
       href="/order"
       aria-label={`View cart with ${count} item${count === 1 ? "" : "s"}`}
-      className="fixed bottom-5 left-1/2 z-[80] flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center justify-between rounded-full border border-gold/30 bg-charcoal/95 px-5 py-4 text-cream shadow-warm backdrop-blur-xl transition hover:-translate-y-1 hover:border-gold md:left-auto md:right-6 md:w-96 md:translate-x-0"
+      className="fixed inset-x-4 bottom-20 z-[80] mx-auto flex max-w-md items-center justify-between rounded-3xl bg-[var(--dark)] px-4 py-3 text-white shadow-[0_18px_45px_rgba(36,23,19,0.22)] transition hover:-translate-y-0.5 md:bottom-6 md:right-6 md:mx-0"
     >
       <span className="flex items-center gap-3">
-        <span className="grid size-10 place-items-center rounded-full bg-flame font-black text-charcoal">
+        <span className="grid size-10 place-items-center rounded-2xl bg-[var(--brand)] text-sm font-black text-white">
           {count}
         </span>
         <span>
-          <span className="block text-xs font-black uppercase tracking-[0.22em] text-gold">Your cart</span>
-          <span className="block text-sm text-cream/70">Ready for checkout</span>
+          <span className="block text-sm font-black">View cart</span>
+          <span className="block text-xs font-semibold text-white/65">Ready for checkout</span>
         </span>
       </span>
       <span className="text-right">
-        <span className="block text-xs text-cream/50">Subtotal</span>
-        <span className="block font-black text-gold">GH₵{subtotal}</span>
+        <span className="block text-xs text-white/55">Subtotal</span>
+        <span className="block font-black">GH₵{subtotal}</span>
       </span>
     </Link>
   );
