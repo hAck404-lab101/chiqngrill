@@ -20,7 +20,6 @@ export function PWAInstallPrompt() {
     const iOSDevice = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 
     setIsIOS(iOSDevice);
-
     if (standalone || dismissed) return;
 
     const timer = window.setTimeout(() => setIsVisible(true), 2400);
@@ -55,26 +54,26 @@ export function PWAInstallPrompt() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-x-4 bottom-24 z-[90] mx-auto max-w-md rounded-[26px] border-2 border-[#17110d] bg-[#fffaf1] p-4 text-[#17110d] shadow-[6px_6px_0_#17110d] md:bottom-6">
+    <div className="fixed inset-x-4 bottom-24 z-[90] mx-auto max-w-md rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 text-[var(--ink)] shadow-[var(--shadow-soft)] ring-1 ring-[var(--line)] md:bottom-6">
       <div className="flex items-start gap-3">
-        <div className="grid size-12 shrink-0 place-items-center rounded-2xl border-2 border-[#17110d] bg-[#d86b2b] font-black text-white">
+        <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--brand)] text-sm font-black text-white">
           CNG
         </div>
-        <div>
-          <h2 className="text-lg font-black leading-tight">Save Chiq-N-Grill as an app</h2>
-          <p className="mt-1 text-sm leading-5 text-[#4c3b31]">
-            Add it to your home screen for quick ordering, reservations, and order tracking.
+        <div className="min-w-0">
+          <h2 className="text-base font-black leading-tight">Save Chiq-N-Grill</h2>
+          <p className="mt-1 text-sm font-medium leading-5 text-[var(--muted)]">
+            Add it to your home screen for faster ordering and tracking.
           </p>
           {isIOS && !deferredPrompt ? (
-            <p className="mt-2 text-xs font-bold text-[#9d3f1d]">On iPhone: tap Share, then Add to Home Screen.</p>
+            <p className="mt-2 text-xs font-bold text-[var(--brand-dark)]">On iPhone: tap Share, then Add to Home Screen.</p>
           ) : null}
           <div className="mt-4 flex gap-2">
             {deferredPrompt ? (
-              <button type="button" onClick={handleInstall} className="rounded-full border-2 border-[#17110d] bg-[#d86b2b] px-4 py-2 text-sm font-black text-white">
-                Install App
+              <button type="button" onClick={handleInstall} className="btn-primary px-4 py-2 text-sm">
+                Install
               </button>
             ) : null}
-            <button type="button" onClick={dismiss} className="rounded-full border-2 border-[#17110d] px-4 py-2 text-sm font-black">
+            <button type="button" onClick={dismiss} className="btn-outline px-4 py-2 text-sm">
               Later
             </button>
           </div>
