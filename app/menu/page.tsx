@@ -3,28 +3,26 @@ import { MenuBrowser } from "@/components/menu-browser";
 import { SectionHeading } from "@/components/section-heading";
 import { categories, menuItems } from "@/lib/restaurant-data";
 
+const modes = ["Dine-in", "Pickup", "Delivery", "Kerbside"];
+
 export default function MenuPage() {
   return (
-    <main className="min-h-screen bg-charcoal text-cream">
-      <div className="noise-overlay" />
+    <main className="app-page">
       <AppHeader />
 
-      <section className="mx-auto max-w-7xl px-5 py-16 md:py-24">
-        <div className="grid gap-10 md:grid-cols-[0.85fr_1.15fr] md:items-end">
+      <section className="app-container py-8 md:py-12">
+        <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
           <SectionHeading
-            eyebrow="Digital menu"
-            title="Find your plate faster."
-            description="Search meals, filter by category, spice level, price, and availability, then add favorites to cart before checkout."
+            eyebrow="Menu"
+            title="Choose your meal"
+            description="Search, filter, add to cart, and checkout when you are ready."
           />
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.25em] text-gold">Ordering mode</p>
-            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-              {["Dine-in", "Pickup", "Delivery", "Kerbside"].map((mode) => (
-                <a key={mode} href="/order" className="rounded-full border border-white/10 px-4 py-3 text-center text-sm font-bold text-cream/80 transition hover:border-gold hover:text-gold">
-                  {mode}
-                </a>
-              ))}
-            </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 md:justify-end">
+            {modes.map((mode) => (
+              <a key={mode} href="/order" className="shrink-0 rounded-full bg-[var(--soft)] px-4 py-2 text-sm font-extrabold text-[var(--ink)]">
+                {mode}
+              </a>
+            ))}
           </div>
         </div>
 
