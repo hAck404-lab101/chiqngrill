@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 const variants = {
-  primary: "bg-cream text-charcoal hover:bg-gold",
-  flame: "bg-flame text-charcoal hover:bg-gold",
-  outline: "border border-cream/25 text-cream hover:border-gold hover:text-gold",
-  gold: "border border-gold/40 text-gold hover:bg-gold hover:text-charcoal"
+  primary: "btn-dark",
+  flame: "btn-primary",
+  outline: "btn-outline",
+  gold: "btn-primary"
 };
 
 type CTAButtonProps = {
@@ -15,7 +15,7 @@ type CTAButtonProps = {
 };
 
 export function CTAButton({ href, children, variant = "primary", external = false }: CTAButtonProps) {
-  const className = `rounded-full px-7 py-4 text-center font-black transition hover:scale-[1.02] ${variants[variant]}`;
+  const className = `${variants[variant]} w-full text-center text-sm sm:w-auto`;
 
   if (external || href.startsWith("tel:") || href.startsWith("https://wa.me")) {
     return (
