@@ -2,7 +2,6 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { CTAButton } from "@/components/cta-button";
 import { restaurant } from "@/lib/restaurant-data";
 
 type AppHeaderProps = {
@@ -15,7 +14,6 @@ const customerLinks = [
   { label: "Reserve", href: "/reservations" },
   { label: "Deals", href: "/deals" },
   { label: "Track", href: "/track" },
-  { label: "Gallery", href: "/gallery" },
   { label: "Delivery", href: "/delivery" }
 ];
 
@@ -33,20 +31,16 @@ function getPathAndQuery(href: string) {
 
 function queryContainsRequiredParams(currentQuery: URLSearchParams, requiredQuery: string) {
   if (!requiredQuery) return true;
-
   const requiredParams = new URLSearchParams(requiredQuery);
-
   for (const [key, value] of requiredParams.entries()) {
     if (currentQuery.get(key) !== value) return false;
   }
-
   return true;
 }
 
 function isActivePath(pathname: string, searchParams: URLSearchParams, href: string) {
   const { path, query } = getPathAndQuery(href);
   const matchesPath = path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
-
   return matchesPath && queryContainsRequiredParams(searchParams, query);
 }
 
@@ -59,85 +53,58 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-charcoal/88 backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
-        <a href={isAdmin ? "/admin" : "/"} className="shrink-0 text-sm font-black uppercase tracking-[0.28em] text-gold">
-          {isAdmin ? "CNG Ops" : "Chiq-N-Grill"}
+    <header className="sticky top-0 z-50 bg-[var(--paper)] py-3">
+      <nav className="app-container flex items-center justify-between gap-3 rounded-[26px] border-2 border-[var(--line)] bg-[#fffaf1] px-4 py-3 shadow-[4px_4px_0_#17110d]">
+        <a href={isAdmin ? "/admin" : "/"} className="flex items-center gap-3">
+          <span className="grid size-11 place-items-center rounded-[15px] border-2 border-[var(--line)] bg-[var(--clay)] text-sm font-black text-white">
+            CNG
+          </span>
+          <span className="hidden leading-tight sm:block">
+            <span className="block text-sm font-black uppercase tracking-[0.18em] text-[var(--ink)]">{isAdmin ? "Operations" : "Chiq-N-Grill"}</span>
+            <span className="block text-xs font-bold text-[var(--ink-soft)]">{isAdmin ? "Kitchen control" : "Accra grill app"}</span>
+          </span>
         </a>
 
-        <div className="hidden items-center gap-5 text-sm text-cream/75 lg:flex">
+        <div className="hidden items-center gap-2 text-sm lg:flex">
           {links.map((link) => {
             const active = isActivePath(pathname, activeSearchParams, link.href);
             return (
-              <a key={link.href} href={link.href} className={`rounded-full px-3 py-2 transition ${active ? "bg-gold/15 text-gold" : "hover:text-gold"}`}>
+              <a key={link.href} href={link.href} className={`rounded-full px-4 py-2 font-black transition ${active ? "bg-[var(--ink)] text-[var(--paper)]" : "text-[var(--ink-soft)] hover:bg-[var(--paper-deep)] hover:text-[var(--ink)]"}`}>
                 {link.label}
               </a>
             );
           })}
         </div>
 
-        <div className="flex items-center gap-3">
-          {isAdmin ? (
-            <span className="hidden rounded-full border border-gold/30 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-gold sm:inline-flex">
-              Protected route pending
-            </span>
-          ) : (
-            <div className="hidden sm:block">
-              <CTAButton href={restaurant.phoneHref} variant="flame">
-                Call
-              </CTAButton>
-            </div>
-          )}
-          <a href={isAdmin ? "/kitchen" : "/order"} className="hidden rounded-full border border-cream/20 px-5 py-3 text-sm font-black text-cream transition hover:border-gold hover:text-gold sm:inline-flex">
+        <div className="flex items-center gap-2">
+          <a href={isAdmin ? "/kitchen" : "/order"} className="btn-dark hidden px-5 py-3 text-sm sm:inline-flex">
             {isAdmin ? "Kitchen" : "Cart"}
           </a>
-          <button
-            type="button"
-            onClick={() => setIsOpen((value) => !value)}
-            className="rounded-full border border-cream/20 px-4 py-3 text-sm font-black text-cream transition hover:border-gold hover:text-gold lg:hidden"
-            aria-expanded={isOpen}
-            aria-label="Toggle navigation menu"
-          >
+          {!isAdmin ? (
+            <a href={restaurant.phoneHref} className="btn-primary hidden px-5 py-3 text-sm md:inline-flex">
+              Call
+            </a>
+          ) : null}
+          <button type="button" onClick={() => setIsOpen((value) => !value)} className="btn-outline px-4 py-3 text-sm lg:hidden" aria-expanded={isOpen} aria-label="Toggle navigation menu">
             {isOpen ? "Close" : "Menu"}
           </button>
         </div>
       </nav>
 
-      <div
-        className={`grid overflow-hidden border-t border-white/10 bg-charcoal transition-all duration-300 ease-out lg:hidden ${
-          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
+      <div className={`app-container grid overflow-hidden transition-all duration-300 ease-out lg:hidden ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
         <div className="min-h-0">
-          <div
-            className={`mx-auto grid max-w-7xl gap-3 px-5 py-5 transition duration-300 ease-out ${
-              isOpen ? "translate-y-0 scale-100 opacity-100" : "-translate-y-3 scale-[0.98] opacity-0"
-            }`}
-          >
+          <div className={`mt-3 grid gap-3 rounded-[26px] border-2 border-[var(--line)] bg-[#fffaf1] p-3 shadow-[4px_4px_0_#17110d] transition duration-300 ${isOpen ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>
             {links.map((link) => {
               const active = isActivePath(pathname, activeSearchParams, link.href);
               return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`rounded-2xl border px-4 py-4 font-black transition ${
-                    active
-                      ? "border-gold/40 bg-gold/15 text-gold"
-                      : "border-white/10 bg-white/[0.04] text-cream/75 hover:border-gold hover:text-gold"
-                  }`}
-                >
+                <a key={link.href} href={link.href} onClick={() => setIsOpen(false)} className={`rounded-[18px] border-2 border-[var(--line)] px-4 py-4 font-black ${active ? "bg-[var(--ink)] text-[var(--paper)]" : "bg-[var(--paper)] text-[var(--ink)]"}`}>
                   {link.label}
                 </a>
               );
             })}
-            <div className="mt-2 grid grid-cols-2 gap-3">
-              <a href={isAdmin ? "/kitchen" : "/order"} className="rounded-full bg-cream px-5 py-4 text-center font-black text-charcoal">
-                {isAdmin ? "Kitchen" : "Cart"}
-              </a>
-              <a href={isAdmin ? "/admin" : restaurant.phoneHref} className="rounded-full bg-flame px-5 py-4 text-center font-black text-charcoal">
-                {isAdmin ? "Admin" : "Call"}
-              </a>
+            <div className="grid grid-cols-2 gap-3">
+              <a href={isAdmin ? "/kitchen" : "/order"} className="btn-dark text-sm">{isAdmin ? "Kitchen" : "Cart"}</a>
+              <a href={isAdmin ? "/admin" : restaurant.phoneHref} className="btn-primary text-sm">{isAdmin ? "Admin" : "Call"}</a>
             </div>
           </div>
         </div>
