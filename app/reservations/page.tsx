@@ -50,40 +50,47 @@ export default function ReservationsPage() {
   return (
     <main className="app-page">
       <AppHeader />
-      <section className="app-container grid gap-6 py-8 md:grid-cols-[0.85fr_1.15fr] md:py-12">
-        <div>
-          <SectionHeading eyebrow="Reservations" title="Book a table" description="Choose a date, time, and group size. We will save the request in the restaurant system." />
-          <div className="surface mt-6 p-5">
-            <p className="text-lg font-black">Good for</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {occasions.map((item) => <span key={item} className="pill">{item}</span>)}
+      <section className="app-container py-8 md:py-12">
+        <div className="grid gap-6 md:grid-cols-[0.82fr_1.18fr] md:items-start">
+          <div>
+            <SectionHeading eyebrow="Reserve" title="Book a table" description="Pick a time, tell us your group size, and we will save the request in the restaurant system." />
+            <div className="surface mt-6 overflow-hidden p-3">
+              <div className="food-tile min-h-[210px]" />
+              <div className="p-2 pt-4">
+                <p className="text-lg font-black">Good for dine-in moments</p>
+                <p className="mt-2 text-sm font-medium leading-6 text-[var(--muted)]">Birthdays, friends, family meals, business lunch, and calm evening visits.</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {occasions.slice(0, 4).map((item) => <span key={item} className="pill">{item}</span>)}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="surface p-5 md:p-6">
-          <h1 className="text-2xl font-black">Reservation details</h1>
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <label className="app-label">Full name<input value={name} onChange={(e) => setName(e.target.value)} className="app-input" placeholder="Your name" /></label>
-            <label className="app-label">Phone<input value={phone} onChange={(e) => setPhone(e.target.value)} className="app-input" placeholder="024 XXX XXXX" /></label>
-            <label className="app-label">Date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="app-input" /></label>
-            <label className="app-label">Time<input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="app-input" /></label>
-            <label className="app-label">Guests<input type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} className="app-input" /></label>
-            <label className="app-label">Occasion<select value={occasion} onChange={(e) => setOccasion(e.target.value)} className="app-input">{occasions.map((item) => <option key={item}>{item}</option>)}</select></label>
-            <label className="app-label md:col-span-2">Special request<textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="app-input min-h-24" placeholder="Seating preference, arrival note, group setup..." /></label>
-          </div>
-
-          {error ? <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
-          {reference ? (
-            <div className="mt-4 rounded-2xl bg-green-50 p-4 text-green-800">
-              <p className="text-sm font-bold">Reservation saved</p>
-              <p className="mt-1 text-xl font-black">{reference}</p>
+          <div className="surface p-5 md:p-6">
+            <h1 className="text-2xl font-black">Reservation details</h1>
+            <p className="mt-1 text-sm font-medium text-[var(--muted)]">Keep it simple. We only need the details to confirm your table.</p>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <label className="app-label">Date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="app-input" /></label>
+              <label className="app-label">Time<input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="app-input" /></label>
+              <label className="app-label">Guests<input type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} className="app-input" /></label>
+              <label className="app-label">Occasion<select value={occasion} onChange={(e) => setOccasion(e.target.value)} className="app-input">{occasions.map((item) => <option key={item}>{item}</option>)}</select></label>
+              <label className="app-label">Full name<input value={name} onChange={(e) => setName(e.target.value)} className="app-input" placeholder="Your name" /></label>
+              <label className="app-label">Phone<input value={phone} onChange={(e) => setPhone(e.target.value)} className="app-input" placeholder="024 XXX XXXX" /></label>
+              <label className="app-label md:col-span-2">Special request<textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="app-input min-h-24" placeholder="Seating preference, arrival note, group setup..." /></label>
             </div>
-          ) : null}
 
-          <button type="button" onClick={submitReservation} disabled={isSubmitting} className="btn-primary mt-5 w-full disabled:opacity-50">
-            {isSubmitting ? "Submitting..." : "Request Table"}
-          </button>
+            {error ? <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
+            {reference ? (
+              <div className="mt-4 rounded-2xl bg-green-50 p-4 text-green-800">
+                <p className="text-sm font-bold">Reservation saved</p>
+                <p className="mt-1 text-xl font-black">{reference}</p>
+              </div>
+            ) : null}
+
+            <button type="button" onClick={submitReservation} disabled={isSubmitting} className="btn-primary mt-5 w-full disabled:opacity-50">
+              {isSubmitting ? "Submitting..." : "Request Table"}
+            </button>
+          </div>
         </div>
       </section>
     </main>
