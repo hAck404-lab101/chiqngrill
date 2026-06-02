@@ -1,3 +1,5 @@
+import { AppHeader } from "@/components/app-header";
+
 const lanes = [
   {
     title: "New Orders",
@@ -15,9 +17,7 @@ const lanes = [
   },
   {
     title: "Ready",
-    orders: [
-      { ref: "CNG-0003", items: "Chicken & Fries Combo", time: "Ready now" }
-    ]
+    orders: [{ ref: "CNG-0003", items: "Chicken & Fries Combo", time: "Ready now" }]
   }
 ];
 
@@ -25,12 +25,7 @@ export default function KitchenPage() {
   return (
     <main className="min-h-screen bg-charcoal text-cream">
       <div className="noise-overlay" />
-      <header className="border-b border-white/10 bg-charcoal/90 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <a href="/admin" className="text-sm font-black uppercase tracking-[0.28em] text-gold">Kitchen View</a>
-          <p className="rounded-full bg-flame px-4 py-2 text-sm font-black text-charcoal">Protected route pending</p>
-        </nav>
-      </header>
+      <AppHeader variant="admin" />
 
       <section className="mx-auto max-w-7xl px-5 py-10">
         <p className="text-sm font-black uppercase tracking-[0.28em] text-flame">Operations screen</p>
