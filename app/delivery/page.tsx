@@ -11,34 +11,37 @@ const zones = [
 
 export default function DeliveryPage() {
   return (
-    <main className="min-h-screen bg-charcoal text-cream">
-      <div className="noise-overlay" />
+    <main className="app-page">
       <AppHeader />
 
-      <section className="mx-auto max-w-7xl px-5 py-16 md:py-24">
+      <section className="app-container py-8 md:py-12">
         <SectionHeading
-          eyebrow="Delivery zones"
-          title="Know the delivery range before checkout."
-          description="This MVP page prepares zone pricing, delivery estimates, and area rules before live backend fee calculation is added."
+          eyebrow="Delivery"
+          title="Check delivery before ordering"
+          description="Use this as a simple guide for fees and estimated delivery time around Accra."
         />
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
+
+        <div className="mt-7 grid gap-4 md:grid-cols-3">
           {zones.map((zone) => (
-            <article key={zone.name} className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-gold">{zone.status}</p>
-              <h2 className="mt-3 text-3xl font-black">{zone.name}</h2>
-              <div className="mt-6 grid gap-3 text-cream/70">
-                <p>Delivery fee: <span className="font-black text-gold">{zone.fee}</span></p>
-                <p>Estimated time: <span className="font-black text-gold">{zone.eta}</span></p>
+            <article key={zone.name} className="surface p-5">
+              <span className="pill">{zone.status}</span>
+              <h2 className="mt-4 text-2xl font-black">{zone.name}</h2>
+              <div className="mt-5 space-y-2 text-sm font-semibold text-[var(--muted)]">
+                <p>Fee: <span className="font-black text-[var(--ink)]">{zone.fee}</span></p>
+                <p>Time: <span className="font-black text-[var(--ink)]">{zone.eta}</span></p>
               </div>
             </article>
           ))}
         </div>
-        <div className="mt-12 rounded-[2.5rem] border border-white/10 bg-cream p-8 text-charcoal md:p-12">
-          <h2 className="text-4xl font-black">Delivery rule for production</h2>
-          <p className="mt-4 max-w-3xl leading-8 text-charcoal/65">When the backend is added, delivery fees should be calculated server-side based on selected zone, address, distance rules, or admin-controlled fee tables.</p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <CTAButton href="/order" variant="flame">Start Delivery Order</CTAButton>
-            <CTAButton href={restaurant.phoneHref} variant="gold">Call to Confirm</CTAButton>
+
+        <div className="surface mt-7 p-5 md:p-7">
+          <h2 className="text-2xl font-black">Ready to order?</h2>
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[var(--muted)]">
+            Final delivery fee can be confirmed when your order is received. For now, start your cart and choose delivery at checkout.
+          </p>
+          <div className="mt-5 grid gap-3 sm:flex">
+            <CTAButton href="/menu" variant="flame">Choose Meals</CTAButton>
+            <CTAButton href={restaurant.phoneHref} variant="outline">Call to Confirm</CTAButton>
           </div>
         </div>
       </section>
