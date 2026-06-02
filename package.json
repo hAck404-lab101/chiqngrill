@@ -4,8 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:frontend": "next dev",
+    "dev:api": "node backend/server.js",
     "build": "next build",
     "start": "next start",
+    "start:api": "NODE_ENV=production node backend/server.js",
     "lint": "next lint"
   },
   "dependencies": {
@@ -13,8 +16,14 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "autoprefixer": "latest",
+    "cors": "latest",
+    "dotenv": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "express": "latest",
+    "express-rate-limit": "latest",
+    "helmet": "latest",
+    "mysql2": "latest",
     "next": "latest",
     "postcss": "latest",
     "react": "latest",
