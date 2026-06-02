@@ -22,9 +22,9 @@ export function AddToCartButton({ item }: AddToCartButtonProps) {
       type="button"
       onClick={handleAddToCart}
       disabled={!item.available}
-      className="mt-5 w-full rounded-full bg-cream px-5 py-3 text-center text-sm font-black text-charcoal transition hover:bg-gold disabled:cursor-not-allowed disabled:bg-cream/40"
+      className="mt-4 w-full rounded-full bg-[var(--brand)] px-5 py-3 text-center text-sm font-extrabold text-white transition hover:bg-[var(--brand-dark)] disabled:cursor-not-allowed disabled:bg-[var(--soft)] disabled:text-[var(--muted)]"
     >
-      {item.available ? (added ? "Added to Cart" : "Add to Cart") : "Unavailable"}
+      {item.available ? (added ? "Added" : "Add to cart") : "Unavailable"}
     </button>
   );
 }
