@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -12,15 +12,15 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "autoprefixer": "latest",
+    "autoprefixer": "^10.5.0",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "lightningcss-win32-x64-msvc": "^1.32.0",
     "next": "latest",
-    "postcss": "latest",
+    "postcss": "^8.5.15",
     "react": "latest",
     "react-dom": "latest",
-    "tailwindcss": "latest",
+    "tailwindcss": "^3.4.19",
     "typescript": "latest"
-  },
-  "devDependencies": {}
+  }
 }
