@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { SectionHeading } from "@/components/section-heading";
-import { restaurant } from "@/lib/restaurant-data";
+import { createReservation } from "@/lib/api-client";
 
 const occasions = ["Casual visit", "Family meal", "Birthday", "Friends hangout", "Business lunch"];
 
@@ -15,40 +15,76 @@ export default function ReservationsPage() {
   const [guests, setGuests] = useState("2");
   const [occasion, setOccasion] = useState(occasions[0]);
   const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [reference, setReference] = useState("");
 
-  const reservationUrl = useMemo(() => {
-    return `${restaurant.whatsappUrl}%0A%0AReservation Request%0AName: ${encodeURIComponent(name || "Guest")}%0APhone: ${encodeURIComponent(phone || "Not provided")}%0ADate: ${encodeURIComponent(date || "Not selected")}%0ATime: ${encodeURIComponent(time)}%0AGuests: ${encodeURIComponent(guests)}%0AOccasion: ${encodeURIComponent(occasion)}%0ANotes: ${encodeURIComponent(notes || "None")}`;
-  }, [date, guests, name, notes, occasion, phone, time]);
+  async function submitReservation() {
+    setError("");
+    setReference("");
+
+    if (!name.trim() || !phone.trim() || !date || !time || !guests) {
+      setError("Fill in your name, phone, date, time, and number of guests.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const reservation = await createReservation({
+        name: name.trim(),
+        phone: phone.trim(),
+        date,
+        time,
+        guests: Number(guests),
+        occasion,
+        notes: notes.trim()
+      });
+      setReference(reservation.reference);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not submit reservation. Make sure the backend is running.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <main className="min-h-screen bg-charcoal text-cream">
-      <div className="noise-overlay" />
+    <main className="app-page">
       <AppHeader />
-      <section className="mx-auto grid max-w-7xl gap-8 px-5 py-16 md:grid-cols-[0.85fr_1.15fr] md:py-24">
+      <section className="app-container grid gap-6 py-8 md:grid-cols-[0.85fr_1.15fr] md:py-12">
         <div>
-          <SectionHeading eyebrow="Reservations" title="Book the vibe before you arrive." description="Reserve a table for dine-in, birthdays, casual visits, and relaxed hangouts with good food and soothing music." />
-          <div className="mt-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
-            <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Best for</p>
-            <div className="mt-5 grid gap-3">
-              {occasions.map((item) => <div key={item} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 font-bold text-cream/75">{item}</div>)}
+          <SectionHeading eyebrow="Reservations" title="Book a table" description="Choose a date, time, and group size. We will save the request in the restaurant system." />
+          <div className="surface mt-6 p-5">
+            <p className="text-lg font-black">Good for</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {occasions.map((item) => <span key={item} className="pill">{item}</span>)}
             </div>
           </div>
         </div>
-        <form className="rounded-[2.5rem] border border-white/10 bg-cream p-6 text-charcoal md:p-8">
-          <p className="text-sm font-black uppercase tracking-[0.28em] text-flame">Table request</p>
-          <h1 className="mt-3 text-4xl font-black">Send reservation on WhatsApp.</h1>
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-bold">Full name<input value={name} onChange={(e) => setName(e.target.value)} className="rounded-2xl border border-charcoal/10 bg-white px-4 py-4 outline-none focus:border-flame" placeholder="Your name" /></label>
-            <label className="grid gap-2 text-sm font-bold">Phone<input value={phone} onChange={(e) => setPhone(e.target.value)} className="rounded-2xl border border-charcoal/10 bg-white px-4 py-4 outline-none focus:border-flame" placeholder="024 XXX XXXX" /></label>
-            <label className="grid gap-2 text-sm font-bold">Date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded-2xl border border-charcoal/10 bg-white px-4 py-4 outline-none focus:border-flame" /></label>
-            <label className="grid gap-2 text-sm font-bold">Time<input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="rounded-2xl border border-charcoal/10 bg-white px-4 py-4 outline-none focus:border-flame" /></label>
-            <label className="grid gap-2 text-sm font-bold">Guests<input type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} className="rounded-2xl border border-charcoal/10 bg-white px-4 py-4 outline-none focus:border-flame" /></label>
-            <label className="grid gap-2 text-sm font-bold">Occasion<select value={occasion} onChange={(e) => setOccasion(e.target.value)} className="rounded-2xl border border-charcoal/10 bg-white px-4 py-4 outline-none focus:border-flame">{occasions.map((item) => <option key={item}>{item}</option>)}</select></label>
-            <label className="grid gap-2 text-sm font-bold md:col-span-2">Special request<textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-28 rounded-2xl border border-charcoal/10 bg-white px-4 py-4 outline-none focus:border-flame" placeholder="Seating preference, arrival note, group setup..." /></label>
+
+        <div className="surface p-5 md:p-6">
+          <h1 className="text-2xl font-black">Reservation details</h1>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <label className="app-label">Full name<input value={name} onChange={(e) => setName(e.target.value)} className="app-input" placeholder="Your name" /></label>
+            <label className="app-label">Phone<input value={phone} onChange={(e) => setPhone(e.target.value)} className="app-input" placeholder="024 XXX XXXX" /></label>
+            <label className="app-label">Date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="app-input" /></label>
+            <label className="app-label">Time<input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="app-input" /></label>
+            <label className="app-label">Guests<input type="number" min="1" value={guests} onChange={(e) => setGuests(e.target.value)} className="app-input" /></label>
+            <label className="app-label">Occasion<select value={occasion} onChange={(e) => setOccasion(e.target.value)} className="app-input">{occasions.map((item) => <option key={item}>{item}</option>)}</select></label>
+            <label className="app-label md:col-span-2">Special request<textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="app-input min-h-24" placeholder="Seating preference, arrival note, group setup..." /></label>
           </div>
-          <a href={reservationUrl} className="mt-7 block rounded-full bg-flame px-7 py-4 text-center font-black text-charcoal transition hover:bg-gold">Send Reservation Request</a>
-          <p className="mt-4 text-center text-sm text-charcoal/55">MVP request only. Admin approval and calendar slots come with backend.</p>
-        </form>
+
+          {error ? <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
+          {reference ? (
+            <div className="mt-4 rounded-2xl bg-green-50 p-4 text-green-800">
+              <p className="text-sm font-bold">Reservation saved</p>
+              <p className="mt-1 text-xl font-black">{reference}</p>
+            </div>
+          ) : null}
+
+          <button type="button" onClick={submitReservation} disabled={isSubmitting} className="btn-primary mt-5 w-full disabled:opacity-50">
+            {isSubmitting ? "Submitting..." : "Request Table"}
+          </button>
+        </div>
       </section>
     </main>
   );
