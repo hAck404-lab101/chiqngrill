@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="112" fill="#D86B2B"/>
+  <rect x="58" y="64" width="396" height="384" rx="86" fill="#FFF7EC" stroke="#17110D" stroke-width="20"/>
+  <path d="M154 305c21 54 67 83 123 83 72 0 131-59 131-131 0-24-7-47-18-66-11 80-72 131-150 131-32 0-61-5-86-17Z" fill="#17110D"/>
+  <path d="M146 200c51-59 118-86 201-80" stroke="#17110D" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="192" cy="220" r="21" fill="#D86B2B"/>
+  <circle cx="272" cy="194" r="21" fill="#D86B2B"/>
+  <circle cx="352" cy="192" r="21" fill="#D86B2B"/>
+  <text x="256" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="78" font-weight="900" fill="#17110D">CNG</text>
+</svg>
