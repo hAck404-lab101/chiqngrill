@@ -3,9 +3,20 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
-  background: #111111;
-  color: #fff4e6;
+  --ink: #17110d;
+  --ink-soft: #4c3b31;
+  --paper: #fff7ec;
+  --paper-deep: #f3dfc3;
+  --clay: #d86b2b;
+  --clay-dark: #9d3f1d;
+  --pepper: #25160f;
+  --leaf: #2f6f4e;
+  --line: #2b1a12;
+  --radius-sm: 14px;
+  --radius-md: 22px;
+  --radius-lg: 34px;
+  --shadow-hard: 8px 8px 0 #17110d;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {
@@ -14,15 +25,13 @@
 
 html {
   scroll-behavior: smooth;
+  background: var(--paper);
 }
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(217, 107, 39, 0.2), transparent 34rem),
-    radial-gradient(circle at bottom right, rgba(245, 176, 65, 0.12), transparent 30rem),
-    #111111;
-  color: #fff4e6;
+  background: var(--paper);
+  color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -31,16 +40,163 @@ a {
   text-decoration: none;
 }
 
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
 ::selection {
-  background: #d96b27;
-  color: #111111;
+  background: var(--clay);
+  color: var(--paper);
 }
 
 .noise-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.05;
-  background-image: linear-gradient(115deg, rgba(255,255,255,0.18) 0.5px, transparent 0.5px);
-  background-size: 18px 18px;
+  display: none;
+}
+
+@layer components {
+  .app-page {
+    min-height: 100vh;
+    background:
+      linear-gradient(180deg, #fff7ec 0%, #f3dfc3 100%);
+    color: var(--ink);
+  }
+
+  .app-container {
+    width: min(1180px, calc(100% - 32px));
+    margin-inline: auto;
+  }
+
+  .solid-panel {
+    background: #fffaf1;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-hard);
+  }
+
+  .solid-panel-dark {
+    background: var(--pepper);
+    color: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-hard);
+  }
+
+  .solid-card {
+    background: #fffaf1;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-md);
+    box-shadow: 4px 4px 0 var(--line);
+    transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+  }
+
+  .solid-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--line);
+  }
+
+  .food-tile {
+    background:
+      linear-gradient(135deg, #3a1d10 0%, #d86b2b 48%, #f3b35f 100%);
+    border: 2px solid var(--line);
+    border-radius: var(--radius-md);
+    min-height: 190px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .food-tile::after {
+    content: "";
+    position: absolute;
+    inset: auto -20% -35% 20%;
+    height: 120px;
+    background: rgba(255, 247, 236, 0.36);
+    border-radius: 999px;
+    transform: rotate(-8deg);
+  }
+
+  .btn-primary,
+  .btn-dark,
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.95rem 1.35rem;
+    font-weight: 900;
+    transition: transform 180ms var(--ease), box-shadow 180ms var(--ease), background 180ms var(--ease);
+  }
+
+  .btn-primary {
+    background: var(--clay);
+    color: var(--paper);
+    border: 2px solid var(--line);
+    box-shadow: 4px 4px 0 var(--line);
+  }
+
+  .btn-dark {
+    background: var(--ink);
+    color: var(--paper);
+    border: 2px solid var(--line);
+    box-shadow: 4px 4px 0 var(--clay-dark);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--ink);
+    border: 2px solid var(--line);
+  }
+
+  .btn-primary:hover,
+  .btn-dark:hover,
+  .btn-outline:hover {
+    transform: translate(-2px, -2px);
+  }
+
+  .app-input {
+    width: 100%;
+    border: 2px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: #fffaf1;
+    color: var(--ink);
+    padding: 0.95rem 1rem;
+    outline: none;
+  }
+
+  .app-input:focus {
+    box-shadow: 0 0 0 4px rgba(216, 107, 43, 0.22);
+  }
+
+  .app-label {
+    display: grid;
+    gap: 0.55rem;
+    font-size: 0.875rem;
+    font-weight: 900;
+    color: var(--ink);
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 950;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--clay-dark);
+  }
+
+  .app-title {
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    line-height: 0.96;
+  }
+
+  .mobile-app-frame {
+    border: 3px solid var(--line);
+    border-radius: 42px;
+    background: #fffaf1;
+    box-shadow: var(--shadow-hard);
+    overflow: hidden;
+  }
 }
