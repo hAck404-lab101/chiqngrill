@@ -1,93 +1,130 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { CTAButton } from "@/components/cta-button";
 import { SectionHeading } from "@/components/section-heading";
+import { fetchOrder } from "@/lib/api-client";
 import { restaurant } from "@/lib/restaurant-data";
 
-const trackingSteps = [
-  { label: "Order received", description: "Your order request has been received by Chiq-N-Grill.", time: "Now", state: "completed" },
-  { label: "Preparing your meal", description: "The kitchen is working on the chicken, rice, sides, and sauces.", time: "In progress", state: "active" },
-  { label: "Ready for pickup / dispatch", description: "Your meal will be packed and prepared for pickup, kerbside, or delivery.", time: "Next", state: "pending" },
-  { label: "Completed", description: "Meal collected, delivered, or served dine-in.", time: "Final", state: "pending" }
-];
+type TrackedOrder = {
+  reference: string;
+  status: string;
+  subtotal: number;
+  orderMode: string;
+  items: Array<{ name: string; quantity: number; lineTotal: number }>;
+};
 
-function normalizeReference(value: string) {
-  return value.trim().toUpperCase() || "CNG-20260531-0001";
+const statusSteps = ["Pending", "Accepted", "Preparing", "Ready", "Out for delivery", "Completed"];
+
+function getReferenceFromUrl() {
+  if (typeof window === "undefined") return "";
+  return new URLSearchParams(window.location.search).get("ref") || "";
 }
 
 export default function TrackPage() {
   const [referenceInput, setReferenceInput] = useState("");
-  const [trackedReference, setTrackedReference] = useState("CNG-20260531-0001");
+  const [order, setOrder] = useState<TrackedOrder | null>(null);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const estimatedReadyTime = useMemo(() => {
-    return trackedReference.endsWith("0001") ? "20–30 minutes" : "Confirm with restaurant";
-  }, [trackedReference]);
+  useEffect(() => {
+    const urlReference = getReferenceFromUrl();
+    if (urlReference) {
+      setReferenceInput(urlReference);
+      void handleTrack(urlReference);
+    }
+  }, []);
 
-  function handleTrackOrder(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setTrackedReference(normalizeReference(referenceInput));
+  async function handleTrack(reference = referenceInput) {
+    const cleanReference = reference.trim().toUpperCase();
+    setError("");
+    setOrder(null);
+
+    if (!cleanReference) {
+      setError("Enter your order reference.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await fetchOrder(cleanReference);
+      setOrder(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Order not found. Check the reference and try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
+  const currentStatus = order?.status || "Pending";
+  const activeIndex = Math.max(0, statusSteps.indexOf(currentStatus));
+
   return (
-    <main className="min-h-screen bg-charcoal text-cream">
-      <div className="noise-overlay" />
+    <main className="app-page">
       <AppHeader />
 
-      <section className="mx-auto grid max-w-7xl gap-8 px-5 py-16 md:grid-cols-[0.8fr_1.2fr] md:py-24">
+      <section className="app-container grid gap-6 py-8 md:grid-cols-[0.85fr_1.15fr] md:py-12">
         <div>
-          <SectionHeading eyebrow="Order tracking" title="Track the heat from kitchen to table." description="Enter an order reference to preview the tracking experience. Backend lookup will later connect this page to real order statuses." />
+          <SectionHeading eyebrow="Tracking" title="Track your order" description="Enter the reference from checkout to see the current order status." />
 
-          <form onSubmit={handleTrackOrder} className="mt-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
-            <label className="grid gap-2 text-sm font-bold text-cream/75">
+          <div className="surface mt-6 p-5">
+            <label className="app-label">
               Order reference
-              <input value={referenceInput} onChange={(event) => setReferenceInput(event.target.value)} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-cream outline-none placeholder:text-cream/35 focus:border-gold" placeholder="Example: CNG-20260531-0001" />
+              <input value={referenceInput} onChange={(event) => setReferenceInput(event.target.value)} className="app-input uppercase" placeholder="CNG-20260602-1234" />
             </label>
-            <button type="submit" className="mt-5 w-full rounded-full bg-flame px-6 py-4 font-black text-charcoal transition hover:bg-gold">Track Order</button>
-            <p className="mt-4 text-sm leading-6 text-cream/60">For production, this should require order reference plus phone verification to protect customer privacy.</p>
-          </form>
+            <button type="button" onClick={() => handleTrack()} disabled={isLoading} className="btn-primary mt-4 w-full disabled:opacity-50">
+              {isLoading ? "Checking..." : "Track Order"}
+            </button>
+            {error ? <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
+          </div>
 
-          <div className="mt-5 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
-            <p className="text-sm font-black uppercase tracking-[0.28em] text-gold">Current reference</p>
-            <h2 className="mt-3 text-3xl font-black">{trackedReference}</h2>
-            <div className="mt-5 grid gap-3 text-sm text-cream/70">
-              <p>Status: Preparing your meal</p>
-              <p>Estimated ready time: {estimatedReadyTime}</p>
-              <p>Support: {restaurant.phone}</p>
-            </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <CTAButton href={restaurant.phoneHref} variant="flame">Call Restaurant</CTAButton>
-              <CTAButton href="/order" variant="outline">Back to Checkout</CTAButton>
-            </div>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <CTAButton href={restaurant.phoneHref} variant="flame">Call Restaurant</CTAButton>
+            <CTAButton href="/menu" variant="outline">Back to Menu</CTAButton>
           </div>
         </div>
 
-        <div className="rounded-[2.5rem] border border-white/10 bg-cream p-6 text-charcoal md:p-8">
-          <p className="text-sm font-black uppercase tracking-[0.28em] text-flame">Live status preview</p>
-          <h1 className="mt-3 text-4xl font-black">Preparing your meal.</h1>
-          <p className="mt-3 max-w-2xl leading-7 text-charcoal/65">Estimated time and live updates will connect to the order database later. For now, this shows the intended customer experience.</p>
-          <div className="mt-8 space-y-5">
-            {trackingSteps.map((step, index) => {
-              const isCompleted = step.state === "completed";
-              const isActive = step.state === "active";
-              return (
-                <article key={step.label} className="grid grid-cols-[auto_1fr] gap-4">
-                  <div className="flex flex-col items-center">
-                    <div className={`grid size-11 place-items-center rounded-full border text-sm font-black ${isCompleted ? "border-flame bg-flame text-charcoal" : isActive ? "border-charcoal bg-charcoal text-cream" : "border-charcoal/15 bg-white text-charcoal/35"}`}>{index + 1}</div>
-                    {index < trackingSteps.length - 1 ? <div className="h-16 w-px bg-charcoal/15" /> : null}
-                  </div>
-                  <div className="pb-6">
-                    <div className="flex flex-col justify-between gap-2 md:flex-row md:items-center">
-                      <h2 className="text-xl font-black">{step.label}</h2>
-                      <span className="text-sm font-bold text-flame">{step.time}</span>
+        <div className="surface p-5 md:p-6">
+          {order ? (
+            <>
+              <p className="eyebrow">Current order</p>
+              <h1 className="mt-2 text-3xl font-black">{order.reference}</h1>
+              <p className="mt-2 text-sm font-bold text-[var(--muted)]">{order.orderMode} · GH₵{order.subtotal}</p>
+
+              <div className="mt-6 space-y-4">
+                {statusSteps.map((status, index) => {
+                  const reached = index <= activeIndex;
+                  return (
+                    <div key={status} className="flex items-center gap-3">
+                      <span className={`grid size-9 place-items-center rounded-full text-sm font-black ${reached ? "bg-[var(--brand)] text-white" : "bg-[var(--soft)] text-[var(--muted)]"}`}>{index + 1}</span>
+                      <p className={`font-black ${reached ? "text-[var(--ink)]" : "text-[var(--muted)]"}`}>{status}</p>
                     </div>
-                    <p className="mt-2 leading-7 text-charcoal/65">{step.description}</p>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 rounded-2xl bg-[var(--paper)] p-4">
+                <p className="text-sm font-black">Items</p>
+                <div className="mt-3 space-y-2">
+                  {order.items.map((item) => (
+                    <div key={item.name} className="flex justify-between gap-4 text-sm font-semibold text-[var(--muted)]">
+                      <span>{item.quantity}x {item.name}</span>
+                      <span>GH₵{item.lineTotal}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="grid min-h-[360px] place-items-center text-center">
+              <div>
+                <p className="eyebrow">Waiting</p>
+                <h2 className="mt-2 text-3xl font-black">Enter an order reference</h2>
+                <p className="mt-2 max-w-sm text-sm font-medium leading-6 text-[var(--muted)]">After placing an order, the reference appears on the checkout confirmation.</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </main>
