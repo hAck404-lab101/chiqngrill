@@ -1,7 +1,7 @@
 import { menuItems as fallbackMenuItems, restaurant as fallbackRestaurant } from "@/lib/restaurant-data";
 import type { MenuItem } from "@/lib/restaurant-data";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
 
 export type OrderPayload = {
   customerName: string;
@@ -23,21 +23,33 @@ export type ReservationPayload = {
 };
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers || {})
-    }
-  });
+  let response: Response;
 
-  const payload = await response.json();
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options?.headers || {})
+      }
+    });
+  } catch {
+    throw new Error(`Backend is not reachable. Start the API with npm run dev:api, then test ${API_BASE.replace(/\/api$/, "")}/health`);
+  }
+
+  let payload: { success?: boolean; message?: string; data?: T };
+
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("Backend returned an invalid response. Check the API server terminal for errors.");
+  }
 
   if (!response.ok || payload.success === false) {
     throw new Error(payload.message || "Request failed");
   }
 
-  return payload.data;
+  return payload.data as T;
 }
 
 export async function fetchMenu(): Promise<MenuItem[]> {
