@@ -68,7 +68,8 @@ app.get('/api', (req, res) => {
       restaurant: '/api/menu/restaurant',
       orders: '/api/orders',
       reservations: '/api/reservations',
-      dashboard: '/api/dashboard'
+      dashboard: '/api/dashboard',
+      admin: '/api/admin'
     }
   });
 });
@@ -83,12 +84,22 @@ const generalLimiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please try again shortly.' }
 });
 
+const authLimiter = rateLimit({
+  windowMs: parseNumber(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
+  max: parseNumber(process.env.AUTH_RATE_LIMIT_MAX, 20),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Please try again shortly.' }
+});
+
 app.use('/api/', generalLimiter);
+app.use('/api/admin/login', authLimiter);
 
 app.use('/api/menu', require('./src/routes/menu'));
 app.use('/api/orders', require('./src/routes/orders'));
 app.use('/api/reservations', require('./src/routes/reservations'));
 app.use('/api/dashboard', require('./src/routes/dashboard'));
+app.use('/api/admin', require('./src/routes/admin'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack || err.message);
