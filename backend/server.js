@@ -73,7 +73,8 @@ app.get('/api', (req, res) => {
       orders: '/api/orders',
       reservations: '/api/reservations',
       dashboard: '/api/dashboard',
-      admin: '/api/admin'
+      admin: '/api/admin',
+      uploads: '/api/uploads/image'
     }
   });
 });
@@ -104,6 +105,7 @@ app.use('/api/orders', require('./src/routes/orders'));
 app.use('/api/reservations', require('./src/routes/reservations'));
 app.use('/api/dashboard', require('./src/routes/dashboard'));
 app.use('/api/admin', require('./src/routes/admin'));
+app.use('/api/uploads', require('./src/routes/uploads'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack || err.message);
