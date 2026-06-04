@@ -184,6 +184,13 @@ export async function fetchAdminOrders() {
   return adminFetch<AdminOrder[]>("/admin/orders");
 }
 
+export async function updateKitchenOrderStatus(reference: string, status: string) {
+  return adminFetch<AdminOrder>(`/admin/orders/${encodeURIComponent(reference)}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status })
+  });
+}
+
 export async function fetchAdminReservations() {
   return adminFetch<AdminReservation[]>("/admin/reservations");
 }
