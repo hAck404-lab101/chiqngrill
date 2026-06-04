@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearAdminToken, fetchAdminOrders, updateKitchenOrderStatus, type AdminOrder } from "@/lib/admin-api";
+import { clearAdminToken, fetchAdminOrders, moveKitchenOrderForward, type AdminOrder } from "@/lib/admin-api";
 
 const lanes = [
   { title: "New", status: "Pending", helper: "Start preparing", tone: "bg-[#fff8ef]" },
@@ -17,14 +17,6 @@ function normalizeStatus(value: unknown) {
   if (status === "Out for delivery") return "Ready";
   if (status === "Cancelled") return "Completed";
   return status;
-}
-
-function nextStatus(value: unknown) {
-  const status = normalizeStatus(value);
-  if (status === "Pending") return "Preparing";
-  if (status === "Preparing") return "Ready";
-  if (status === "Ready") return "Completed";
-  return "Completed";
 }
 
 function buttonLabel(value: unknown) {
@@ -79,13 +71,12 @@ export default function KitchenPage() {
 
   async function moveForward(order: AdminOrder) {
     const reference = String(order.reference || "");
-    const status = nextStatus(order.status);
     if (!reference || normalizeStatus(order.status) === "Completed") return;
 
     setUpdatingReference(reference);
     setError("");
     try {
-      const updated = await updateKitchenOrderStatus(reference, status);
+      const updated = await moveKitchenOrderForward(reference);
       setOrders((current) => current.map((entry) => String(entry.reference) === reference ? updated : entry));
       setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
     } catch (err) {
