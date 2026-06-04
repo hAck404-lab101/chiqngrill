@@ -1,0 +1,188 @@
+const express = require('express');
+const { restaurant, menuItems, orders, reservations } = require('../../data/seed');
+const { createAdminToken, requireAdmin, validateAdminLogin, getAdminConfig } = require('../utils/adminAuth');
+
+const router = express.Router();
+
+const galleryItems = [
+  { id: 'golden-chicken', title: 'Golden Chicken', category: 'Food', imageUrl: '', isFeatured: true },
+  { id: 'jollof-plate', title: 'Jollof Plate', category: 'Food', imageUrl: '', isFeatured: true },
+  { id: 'interior-mood', title: 'Interior Mood', category: 'Vibe', imageUrl: '', isFeatured: false }
+];
+
+const homepageContent = {
+  heroTitle: 'Order grilled chicken without the wait.',
+  heroSubtitle: 'Browse the menu, add your meal, choose pickup or delivery, and send your order to Chiq-N-Grill.',
+  featuredMealId: 'breaded-buttered-combo',
+  heroImageUrl: '',
+  announcement: 'Open from 11 AM'
+};
+
+router.post('/login', (req, res) => {
+  const { email, password } = req.body;
+
+  if (!validateAdminLogin(email, password)) {
+    return res.status(401).json({ success: false, message: 'Invalid admin credentials' });
+  }
+
+  const token = createAdminToken(email);
+
+  res.json({
+    success: true,
+    message: 'Admin login successful',
+    data: {
+      token,
+      admin: { email, role: 'admin' }
+    }
+  });
+});
+
+router.get('/me', requireAdmin, (req, res) => {
+  res.json({ success: true, data: { email: req.admin.email, role: req.admin.role } });
+});
+
+router.get('/setup-status', (req, res) => {
+  const config = getAdminConfig();
+  res.json({
+    success: true,
+    data: {
+      hasCustomEmail: Boolean(process.env.ADMIN_EMAIL),
+      hasCustomPassword: Boolean(process.env.ADMIN_PASSWORD),
+      hasCustomSecret: Boolean(process.env.ADMIN_SESSION_SECRET),
+      defaultEmail: config.email,
+      productionReady: Boolean(process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD && process.env.ADMIN_SESSION_SECRET)
+    }
+  });
+});
+
+router.get('/dashboard', requireAdmin, (req, res) => {
+  const revenue = orders.reduce((total, order) => total + order.subtotal, 0);
+
+  res.json({
+    success: true,
+    data: {
+      totals: {
+        orders: orders.length,
+        reservations: reservations.length,
+        menuItems: menuItems.length,
+        galleryItems: galleryItems.length,
+        revenue
+      },
+      recentOrders: orders.slice(0, 8),
+      recentReservations: reservations.slice(0, 8),
+      homepageContent,
+      restaurant
+    }
+  });
+});
+
+router.get('/menu', requireAdmin, (req, res) => {
+  res.json({ success: true, data: menuItems });
+});
+
+router.post('/menu', requireAdmin, (req, res) => {
+  const { name, category, description, priceFrom, spiceLevel, prepTime, badge, available, imageUrl } = req.body;
+
+  if (!name || !category || !priceFrom) {
+    return res.status(400).json({ success: false, message: 'Name, category, and price are required' });
+  }
+
+  const item = {
+    id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+    name,
+    category,
+    description: description || '',
+    priceFrom: Number(priceFrom),
+    spiceLevel: spiceLevel || 'Medium',
+    prepTime: prepTime || '20–30 min',
+    badge: badge || 'Menu item',
+    available: available !== false,
+    imageUrl: imageUrl || ''
+  };
+
+  menuItems.unshift(item);
+  res.status(201).json({ success: true, message: 'Menu item added', data: item });
+});
+
+router.patch('/menu/:id', requireAdmin, (req, res) => {
+  const item = menuItems.find((entry) => entry.id === req.params.id);
+  if (!item) return res.status(404).json({ success: false, message: 'Menu item not found' });
+
+  Object.assign(item, {
+    ...req.body,
+    priceFrom: req.body.priceFrom !== undefined ? Number(req.body.priceFrom) : item.priceFrom
+  });
+
+  res.json({ success: true, message: 'Menu item updated', data: item });
+});
+
+router.delete('/menu/:id', requireAdmin, (req, res) => {
+  const index = menuItems.findIndex((entry) => entry.id === req.params.id);
+  if (index === -1) return res.status(404).json({ success: false, message: 'Menu item not found' });
+
+  const [deleted] = menuItems.splice(index, 1);
+  res.json({ success: true, message: 'Menu item deleted', data: deleted });
+});
+
+router.get('/gallery', requireAdmin, (req, res) => {
+  res.json({ success: true, data: galleryItems });
+});
+
+router.post('/gallery', requireAdmin, (req, res) => {
+  const { title, category, imageUrl, isFeatured } = req.body;
+
+  if (!title) return res.status(400).json({ success: false, message: 'Gallery title is required' });
+
+  const item = {
+    id: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+    title,
+    category: category || 'Food',
+    imageUrl: imageUrl || '',
+    isFeatured: Boolean(isFeatured)
+  };
+
+  galleryItems.unshift(item);
+  res.status(201).json({ success: true, message: 'Gallery item added', data: item });
+});
+
+router.patch('/gallery/:id', requireAdmin, (req, res) => {
+  const item = galleryItems.find((entry) => entry.id === req.params.id);
+  if (!item) return res.status(404).json({ success: false, message: 'Gallery item not found' });
+
+  Object.assign(item, req.body);
+  res.json({ success: true, message: 'Gallery item updated', data: item });
+});
+
+router.get('/homepage', requireAdmin, (req, res) => {
+  res.json({ success: true, data: homepageContent });
+});
+
+router.patch('/homepage', requireAdmin, (req, res) => {
+  Object.assign(homepageContent, req.body);
+  res.json({ success: true, message: 'Homepage content updated', data: homepageContent });
+});
+
+router.get('/settings', requireAdmin, (req, res) => {
+  res.json({ success: true, data: restaurant });
+});
+
+router.patch('/settings', requireAdmin, (req, res) => {
+  Object.assign(restaurant, req.body);
+  res.json({ success: true, message: 'Settings updated', data: restaurant });
+});
+
+router.get('/orders', requireAdmin, (req, res) => {
+  res.json({ success: true, data: orders });
+});
+
+router.get('/reservations', requireAdmin, (req, res) => {
+  res.json({ success: true, data: reservations });
+});
+
+router.post('/reset-demo', requireAdmin, (req, res) => {
+  orders.splice(0, orders.length);
+  reservations.splice(0, reservations.length);
+  res.json({ success: true, message: 'Demo orders and reservations cleared' });
+});
+
+module.exports = router;
