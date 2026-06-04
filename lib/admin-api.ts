@@ -191,6 +191,12 @@ export async function updateKitchenOrderStatus(reference: string, status: string
   });
 }
 
+export async function moveKitchenOrderForward(reference: string) {
+  return adminFetch<AdminOrder>(`/admin/orders/${encodeURIComponent(reference)}/move-forward`, {
+    method: "POST"
+  });
+}
+
 export async function fetchAdminReservations() {
   return adminFetch<AdminReservation[]>("/admin/reservations");
 }
