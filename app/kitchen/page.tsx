@@ -80,6 +80,14 @@ function getOrderItems(order: AdminOrder) {
   }));
 }
 
+function applyOrderStatus(current: AdminOrder[], reference: string, status: string, replacement?: AdminOrder) {
+  return current.map((entry) =>
+    String(entry.reference) === reference
+      ? { ...entry, ...(replacement || {}), status, updatedAt: new Date().toISOString() }
+      : entry
+  );
+}
+
 export default function KitchenPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<AdminOrder[]>(fallbackOrders);
@@ -127,23 +135,21 @@ export default function KitchenPage() {
 
     setUpdatingReference(reference);
     setError("");
+    setOrders((current) => applyOrderStatus(current, reference, nextStatus));
+    setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
 
-    setOrders((current) =>
-      current.map((entry) =>
-        String(entry.reference) === reference
-          ? { ...entry, status: nextStatus, updatedAt: new Date().toISOString() }
-          : entry
-      )
-    );
+    if (usingFallback) {
+      setUpdatingReference("");
+      return;
+    }
 
     try {
-      if (!usingFallback) {
-        await updateKitchenOrderStatus(reference, nextStatus);
-        await loadOrders();
-      }
+      const updatedOrder = await updateKitchenOrderStatus(reference, nextStatus);
+      setOrders((current) => applyOrderStatus(current, reference, String(updatedOrder.status || nextStatus), updatedOrder));
+      setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not update order status");
-      await loadOrders();
+      setOrders((current) => applyOrderStatus(current, reference, String(order.status || "Pending"), order));
     } finally {
       setUpdatingReference("");
     }
@@ -172,8 +178,8 @@ export default function KitchenPage() {
           </a>
           <div className="flex items-center gap-2">
             <a href="/admin" className="hidden rounded-full bg-[#efe0d0] px-4 py-2 text-sm font-black text-[#16110d] sm:inline-flex">Admin</a>
-            <button onClick={() => void loadOrders()} className="rounded-full bg-[#241713] px-4 py-2 text-sm font-black text-white">Refresh</button>
-            <button onClick={logout} className="hidden rounded-full bg-white px-4 py-2 text-sm font-black text-[#76675d] ring-1 ring-black/10 sm:inline-flex">Logout</button>
+            <button type="button" onClick={() => void loadOrders()} className="rounded-full bg-[#241713] px-4 py-2 text-sm font-black text-white">Refresh</button>
+            <button type="button" onClick={logout} className="hidden rounded-full bg-white px-4 py-2 text-sm font-black text-[#76675d] ring-1 ring-black/10 sm:inline-flex">Logout</button>
           </div>
         </nav>
       </header>
@@ -205,7 +211,7 @@ export default function KitchenPage() {
 
         {error ? (
           <div className="mt-5 rounded-3xl bg-red-50 p-4 text-sm font-bold text-red-700">
-            {error}. Showing sample kitchen tickets until the backend is reachable and you are logged in.
+            {error}. The order was returned to its previous status.
           </div>
         ) : null}
 
@@ -264,6 +270,7 @@ export default function KitchenPage() {
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => void moveForward(order)}
                         disabled={completed || updatingReference === reference}
                         className="mt-4 w-full rounded-full bg-[#d86b2b] px-4 py-3 text-sm font-black text-white disabled:bg-[#efe0d0] disabled:text-[#76675d]"
