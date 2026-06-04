@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearAdminToken, fetchAdminOrders, type AdminOrder } from "@/lib/admin-api";
+import { clearAdminToken, fetchAdminOrders, updateKitchenOrderStatus, type AdminOrder } from "@/lib/admin-api";
 
 const statusLanes = [
   { title: "New", status: "Pending", helper: "Accept or start preparing", tone: "bg-[#fff8ef]" },
@@ -55,6 +55,22 @@ function normalizeStatus(value: unknown) {
   return status;
 }
 
+function getNextStatus(value: unknown) {
+  const status = normalizeStatus(value);
+  if (status === "Pending") return "Preparing";
+  if (status === "Preparing") return "Ready";
+  if (status === "Ready") return "Completed";
+  return "Completed";
+}
+
+function getMoveLabel(value: unknown) {
+  const status = normalizeStatus(value);
+  if (status === "Pending") return "Start preparing";
+  if (status === "Preparing") return "Mark ready";
+  if (status === "Ready") return "Complete order";
+  return "Completed";
+}
+
 function getOrderItems(order: AdminOrder) {
   const rawItems = Array.isArray(order.items) ? order.items : [];
   return rawItems.map((item) => ({
@@ -70,6 +86,8 @@ export default function KitchenPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState("Not synced yet");
+  const [updatingReference, setUpdatingReference] = useState("");
+  const [usingFallback, setUsingFallback] = useState(false);
 
   async function loadOrders() {
     setIsLoading(true);
@@ -77,6 +95,7 @@ export default function KitchenPage() {
     try {
       const data = await fetchAdminOrders();
       setOrders(data.length ? data : fallbackOrders);
+      setUsingFallback(!data.length);
       setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
     } catch (err) {
       if (err instanceof Error && err.message.toLowerCase().includes("authentication")) {
@@ -85,6 +104,7 @@ export default function KitchenPage() {
       }
       setError(err instanceof Error ? err.message : "Could not load kitchen orders");
       setOrders(fallbackOrders);
+      setUsingFallback(true);
     } finally {
       setIsLoading(false);
     }
@@ -97,6 +117,36 @@ export default function KitchenPage() {
   function logout() {
     clearAdminToken();
     router.replace("/admin/login");
+  }
+
+  async function moveForward(order: AdminOrder) {
+    const reference = String(order.reference || "");
+    const nextStatus = getNextStatus(order.status);
+
+    if (!reference || normalizeStatus(order.status) === "Completed") return;
+
+    setUpdatingReference(reference);
+    setError("");
+
+    setOrders((current) =>
+      current.map((entry) =>
+        String(entry.reference) === reference
+          ? { ...entry, status: nextStatus, updatedAt: new Date().toISOString() }
+          : entry
+      )
+    );
+
+    try {
+      if (!usingFallback) {
+        await updateKitchenOrderStatus(reference, nextStatus);
+        await loadOrders();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update order status");
+      await loadOrders();
+    } finally {
+      setUpdatingReference("");
+    }
   }
 
   const groupedOrders = useMemo(() => {
@@ -159,6 +209,12 @@ export default function KitchenPage() {
           </div>
         ) : null}
 
+        {usingFallback && !error ? (
+          <div className="mt-5 rounded-3xl bg-[#fff8ef] p-4 text-sm font-bold text-[#9d431f] ring-1 ring-black/5">
+            Sample kitchen tickets are being shown because there are no live orders yet.
+          </div>
+        ) : null}
+
         {isLoading ? <p className="mt-5 text-sm font-bold text-[#76675d]">Loading kitchen orders...</p> : null}
 
         <div className="mt-6 grid gap-4 xl:grid-cols-4">
@@ -181,11 +237,13 @@ export default function KitchenPage() {
 
                 {lane.orders.map((order) => {
                   const items = getOrderItems(order);
+                  const reference = String(order.reference || "");
+                  const completed = normalizeStatus(order.status) === "Completed";
                   return (
-                    <article key={String(order.reference)} className="rounded-3xl bg-white p-4 shadow-[0_10px_30px_rgba(36,23,19,0.07)] ring-1 ring-black/5">
+                    <article key={reference} className="rounded-3xl bg-white p-4 shadow-[0_10px_30px_rgba(36,23,19,0.07)] ring-1 ring-black/5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-lg font-black">{String(order.reference)}</p>
+                          <p className="text-lg font-black">{reference}</p>
                           <p className="mt-1 text-xs font-bold text-[#76675d]">{String(order.customerName || "Customer")} · {String(order.orderMode || "Order")}</p>
                         </div>
                         <span className="rounded-full bg-[#fff8ef] px-3 py-1 text-xs font-black text-[#9d431f]">GH₵{Number(order.subtotal || 0)}</span>
@@ -193,7 +251,7 @@ export default function KitchenPage() {
 
                       <div className="mt-4 space-y-2">
                         {items.map((item) => (
-                          <div key={`${order.reference}-${item.name}`} className="flex justify-between gap-3 rounded-2xl bg-[#f6f1ea] px-3 py-2 text-sm font-bold">
+                          <div key={`${reference}-${item.name}`} className="flex justify-between gap-3 rounded-2xl bg-[#f6f1ea] px-3 py-2 text-sm font-bold">
                             <span>{item.quantity}× {item.name}</span>
                             <span className="text-[#76675d]">GH₵{item.lineTotal}</span>
                           </div>
@@ -205,8 +263,12 @@ export default function KitchenPage() {
                         <span>{String(order.status || "Pending")}</span>
                       </div>
 
-                      <button className="mt-4 w-full rounded-full bg-[#d86b2b] px-4 py-3 text-sm font-black text-white">
-                        Move forward
+                      <button
+                        onClick={() => void moveForward(order)}
+                        disabled={completed || updatingReference === reference}
+                        className="mt-4 w-full rounded-full bg-[#d86b2b] px-4 py-3 text-sm font-black text-white disabled:bg-[#efe0d0] disabled:text-[#76675d]"
+                      >
+                        {updatingReference === reference ? "Updating..." : getMoveLabel(order.status)}
                       </button>
                     </article>
                   );
