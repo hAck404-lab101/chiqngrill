@@ -93,6 +93,7 @@ export default function KitchenPage() {
   const [orders, setOrders] = useState<AdminOrder[]>(fallbackOrders);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [lastUpdated, setLastUpdated] = useState("Not synced yet");
   const [updatingReference, setUpdatingReference] = useState("");
   const [usingFallback, setUsingFallback] = useState(false);
@@ -100,6 +101,7 @@ export default function KitchenPage() {
   async function loadOrders() {
     setIsLoading(true);
     setError("");
+    setNotice("");
     try {
       const data = await fetchAdminOrders();
       setOrders(data.length ? data : fallbackOrders);
@@ -135,10 +137,12 @@ export default function KitchenPage() {
 
     setUpdatingReference(reference);
     setError("");
+    setNotice("");
     setOrders((current) => applyOrderStatus(current, reference, nextStatus));
     setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
 
     if (usingFallback) {
+      setNotice("Sample order moved locally. Live backend data will save once real orders exist.");
       setUpdatingReference("");
       return;
     }
@@ -148,8 +152,7 @@ export default function KitchenPage() {
       setOrders((current) => applyOrderStatus(current, reference, String(updatedOrder.status || nextStatus), updatedOrder));
       setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update order status");
-      setOrders((current) => applyOrderStatus(current, reference, String(order.status || "Pending"), order));
+      setNotice(err instanceof Error ? `Moved locally, but backend save failed: ${err.message}` : "Moved locally, but backend save failed.");
     } finally {
       setUpdatingReference("");
     }
@@ -209,18 +212,9 @@ export default function KitchenPage() {
           </div>
         </div>
 
-        {error ? (
-          <div className="mt-5 rounded-3xl bg-red-50 p-4 text-sm font-bold text-red-700">
-            {error}. The order was returned to its previous status.
-          </div>
-        ) : null}
-
-        {usingFallback && !error ? (
-          <div className="mt-5 rounded-3xl bg-[#fff8ef] p-4 text-sm font-bold text-[#9d431f] ring-1 ring-black/5">
-            Sample kitchen tickets are being shown because there are no live orders yet.
-          </div>
-        ) : null}
-
+        {error ? <div className="mt-5 rounded-3xl bg-red-50 p-4 text-sm font-bold text-red-700">{error}. Showing sample kitchen tickets.</div> : null}
+        {notice ? <div className="mt-5 rounded-3xl bg-[#fff8ef] p-4 text-sm font-bold text-[#9d431f] ring-1 ring-black/5">{notice}</div> : null}
+        {usingFallback && !error && !notice ? <div className="mt-5 rounded-3xl bg-[#fff8ef] p-4 text-sm font-bold text-[#9d431f] ring-1 ring-black/5">Sample kitchen tickets are being shown because there are no live orders yet.</div> : null}
         {isLoading ? <p className="mt-5 text-sm font-bold text-[#76675d]">Loading kitchen orders...</p> : null}
 
         <div className="mt-6 grid gap-4 xl:grid-cols-4">
@@ -235,12 +229,7 @@ export default function KitchenPage() {
               </div>
 
               <div className="mt-4 space-y-3">
-                {lane.orders.length === 0 ? (
-                  <div className="grid min-h-[180px] place-items-center rounded-3xl bg-white/70 p-5 text-center text-sm font-bold text-[#76675d]">
-                    No orders here
-                  </div>
-                ) : null}
-
+                {lane.orders.length === 0 ? <div className="grid min-h-[180px] place-items-center rounded-3xl bg-white/70 p-5 text-center text-sm font-bold text-[#76675d]">No orders here</div> : null}
                 {lane.orders.map((order) => {
                   const items = getOrderItems(order);
                   const reference = String(order.reference || "");
@@ -269,12 +258,7 @@ export default function KitchenPage() {
                         <span>{String(order.status || "Pending")}</span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => void moveForward(order)}
-                        disabled={completed || updatingReference === reference}
-                        className="mt-4 w-full rounded-full bg-[#d86b2b] px-4 py-3 text-sm font-black text-white disabled:bg-[#efe0d0] disabled:text-[#76675d]"
-                      >
+                      <button type="button" onClick={() => void moveForward(order)} disabled={completed || updatingReference === reference} className="mt-4 w-full rounded-full bg-[#d86b2b] px-4 py-3 text-sm font-black text-white disabled:bg-[#efe0d0] disabled:text-[#76675d]">
                         {updatingReference === reference ? "Updating..." : getMoveLabel(order.status)}
                       </button>
                     </article>
