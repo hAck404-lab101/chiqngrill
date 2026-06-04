@@ -18,6 +18,8 @@ const homepageContent = {
   announcement: 'Open from 11 AM'
 };
 
+const orderStatuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for delivery', 'Completed', 'Cancelled'];
+
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -173,6 +175,21 @@ router.patch('/settings', requireAdmin, (req, res) => {
 
 router.get('/orders', requireAdmin, (req, res) => {
   res.json({ success: true, data: orders });
+});
+
+router.patch('/orders/:reference/status', requireAdmin, (req, res) => {
+  const order = orders.find((entry) => entry.reference === req.params.reference);
+  if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+  const { status } = req.body;
+  if (!orderStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid order status' });
+  }
+
+  order.status = status;
+  order.updatedAt = new Date().toISOString();
+
+  res.json({ success: true, message: 'Order status updated', data: order });
 });
 
 router.get('/reservations', requireAdmin, (req, res) => {
