@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { BottomNav } from "@/components/bottom-nav";
-import { FloatingCart } from "@/components/floating-cart";
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
+import { CustomerShell } from "@/components/customer-shell";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import "./globals.css";
 
@@ -32,9 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body>
         {children}
-        <FloatingCart />
-        <PWAInstallPrompt />
-        <BottomNav />
+        <CustomerShell />
         <ServiceWorkerRegister />
       </body>
     </html>
