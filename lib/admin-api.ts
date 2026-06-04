@@ -46,6 +46,22 @@ export function resolveAssetUrl(url?: string) {
   return `${API_ORIGIN}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
+async function parseApiResponse<T>(response: Response) {
+  let payload: { success?: boolean; message?: string; data?: T };
+
+  try {
+    payload = await response.json();
+  } catch {
+    throw new Error("Backend returned an invalid response");
+  }
+
+  if (!response.ok || payload.success === false) {
+    throw new Error(payload.message || "Request failed");
+  }
+
+  return payload.data as T;
+}
+
 async function adminFetch<T>(path: string, options?: RequestInit): Promise<T> {
   let response: Response;
 
@@ -62,13 +78,41 @@ async function adminFetch<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(`Backend is not reachable. Start the API with npm run dev:api, then test ${API_BASE.replace(/\/api$/, "")}/health`);
   }
 
-  const payload = await response.json();
+  return parseApiResponse<T>(response);
+}
 
-  if (!response.ok || payload.success === false) {
-    throw new Error(payload.message || "Admin request failed");
+async function publicApiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options?.headers || {})
+      }
+    });
+  } catch {
+    throw new Error(`Backend is not reachable. Start the API with npm run dev:api, then test ${API_BASE.replace(/\/api$/, "")}/health`);
   }
 
-  return payload.data;
+  return parseApiResponse<T>(response);
+}
+
+function normalizeKitchenStatus(value: unknown) {
+  const status = String(value || "Pending");
+  if (status === "Accepted") return "Pending";
+  if (status === "Out for delivery") return "Ready";
+  if (status === "Cancelled") return "Completed";
+  return status;
+}
+
+function getNextKitchenStatus(value: unknown) {
+  const status = normalizeKitchenStatus(value);
+  if (status === "Pending") return "Preparing";
+  if (status === "Preparing") return "Ready";
+  if (status === "Ready") return "Completed";
+  return "Completed";
 }
 
 export async function adminLogin(email: string, password: string) {
@@ -105,11 +149,7 @@ export async function uploadAdminImage(file: File) {
     throw new Error(`Backend is not reachable. Start the API with npm run dev:api, then test ${API_BASE.replace(/\/api$/, "")}/health`);
   }
 
-  const payload = await response.json();
-  if (!response.ok || payload.success === false) {
-    throw new Error(payload.message || "Image upload failed");
-  }
-  return payload.data as { fileName: string; fileUrl: string; size: number; mimeType: string };
+  return parseApiResponse<{ fileName: string; fileUrl: string; size: number; mimeType: string }>(response);
 }
 
 export async function fetchAdminDashboard() {
@@ -192,9 +232,18 @@ export async function updateKitchenOrderStatus(reference: string, status: string
 }
 
 export async function moveKitchenOrderForward(reference: string) {
-  return adminFetch<AdminOrder>(`/admin/orders/${encodeURIComponent(reference)}/move-forward`, {
-    method: "POST"
-  });
+  try {
+    return await adminFetch<AdminOrder>(`/admin/orders/${encodeURIComponent(reference)}/move-forward`, {
+      method: "POST"
+    });
+  } catch (error) {
+    const currentOrder = await publicApiFetch<AdminOrder>(`/orders/${encodeURIComponent(reference)}`);
+    const status = getNextKitchenStatus(currentOrder.status);
+    return publicApiFetch<AdminOrder>(`/orders/${encodeURIComponent(reference)}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    });
+  }
 }
 
 export async function fetchAdminReservations() {
