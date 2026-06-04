@@ -20,6 +20,26 @@ const homepageContent = {
 
 const orderStatuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for delivery', 'Completed', 'Cancelled'];
 
+function findOrderByReference(reference) {
+  const cleanReference = decodeURIComponent(String(reference || '')).trim().toUpperCase();
+  return orders.find((entry) => String(entry.reference || '').trim().toUpperCase() === cleanReference);
+}
+
+function normalizeOrderStatus(status) {
+  if (status === 'Accepted') return 'Pending';
+  if (status === 'Out for delivery') return 'Ready';
+  if (status === 'Cancelled') return 'Completed';
+  return status || 'Pending';
+}
+
+function getNextOrderStatus(status) {
+  const normalized = normalizeOrderStatus(status);
+  if (normalized === 'Pending') return 'Preparing';
+  if (normalized === 'Preparing') return 'Ready';
+  if (normalized === 'Ready') return 'Completed';
+  return 'Completed';
+}
+
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -178,7 +198,7 @@ router.get('/orders', requireAdmin, (req, res) => {
 });
 
 router.patch('/orders/:reference/status', requireAdmin, (req, res) => {
-  const order = orders.find((entry) => entry.reference === req.params.reference);
+  const order = findOrderByReference(req.params.reference);
   if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
   const { status } = req.body;
@@ -190,6 +210,16 @@ router.patch('/orders/:reference/status', requireAdmin, (req, res) => {
   order.updatedAt = new Date().toISOString();
 
   res.json({ success: true, message: 'Order status updated', data: order });
+});
+
+router.post('/orders/:reference/move-forward', requireAdmin, (req, res) => {
+  const order = findOrderByReference(req.params.reference);
+  if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+  order.status = getNextOrderStatus(order.status);
+  order.updatedAt = new Date().toISOString();
+
+  res.json({ success: true, message: 'Order moved forward', data: order });
 });
 
 router.get('/reservations', requireAdmin, (req, res) => {
