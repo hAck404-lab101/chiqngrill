@@ -21,6 +21,11 @@ export type AdminDashboard = {
   restaurant: Record<string, string | string[]>;
 };
 
+export type AdminMenuItem = Record<string, string | number | boolean>;
+export type AdminGalleryItem = Record<string, string | boolean>;
+export type AdminOrder = Record<string, string | number | boolean | Array<Record<string, string | number>>>;
+export type AdminReservation = Record<string, string | number>;
+
 export function getAdminToken() {
   if (typeof window === "undefined") return "";
   return window.localStorage.getItem(ADMIN_TOKEN_KEY) || "";
@@ -80,14 +85,29 @@ export async function fetchAdminDashboard() {
 }
 
 export async function fetchAdminMenu() {
-  return adminFetch<Array<Record<string, string | number | boolean>>>("/admin/menu");
+  return adminFetch<AdminMenuItem[]>("/admin/menu");
 }
 
 export async function createAdminMenuItem(payload: Record<string, string | number | boolean>) {
-  return adminFetch<Record<string, string | number | boolean>>("/admin/menu", {
+  return adminFetch<AdminMenuItem>("/admin/menu", {
     method: "POST",
     body: JSON.stringify(payload)
   });
+}
+
+export async function fetchAdminGallery() {
+  return adminFetch<AdminGalleryItem[]>("/admin/gallery");
+}
+
+export async function createAdminGalleryItem(payload: Record<string, string | boolean>) {
+  return adminFetch<AdminGalleryItem>("/admin/gallery", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function fetchHomepageContent() {
+  return adminFetch<Record<string, string>>("/admin/homepage");
 }
 
 export async function updateHomepageContent(payload: Record<string, string>) {
@@ -97,11 +117,23 @@ export async function updateHomepageContent(payload: Record<string, string>) {
   });
 }
 
+export async function fetchSiteSettings() {
+  return adminFetch<Record<string, string | string[]>>("/admin/settings");
+}
+
 export async function updateSiteSettings(payload: Record<string, string>) {
   return adminFetch<Record<string, string>>("/admin/settings", {
     method: "PATCH",
     body: JSON.stringify(payload)
   });
+}
+
+export async function fetchAdminOrders() {
+  return adminFetch<AdminOrder[]>("/admin/orders");
+}
+
+export async function fetchAdminReservations() {
+  return adminFetch<AdminReservation[]>("/admin/reservations");
 }
 
 export async function resetDemoData() {
