@@ -1,53 +1,216 @@
-import { AppHeader } from "@/components/app-header";
+"use client";
 
-const lanes = [
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { clearAdminToken, fetchAdminOrders, type AdminOrder } from "@/lib/admin-api";
+
+const statusLanes = [
+  { title: "New", status: "Pending", helper: "Accept or start preparing", tone: "bg-[#fff8ef]" },
+  { title: "Preparing", status: "Preparing", helper: "Currently in kitchen", tone: "bg-[#fff3df]" },
+  { title: "Ready", status: "Ready", helper: "Packed for pickup or dispatch", tone: "bg-[#eff8ef]" },
+  { title: "Done", status: "Completed", helper: "Finished orders", tone: "bg-white" }
+];
+
+const fallbackOrders: AdminOrder[] = [
   {
-    title: "New Orders",
-    orders: [
-      { ref: "CNG-0007", items: "2x Breaded Combo, 1x Jollof", time: "2 min ago" },
-      { ref: "CNG-0008", items: "1x Herb Butter Rice", time: "5 min ago" }
+    reference: "CNG-0007",
+    customerName: "Walk-in pickup",
+    status: "Pending",
+    subtotal: 210,
+    orderMode: "Pickup",
+    createdAt: "Just now",
+    items: [
+      { name: "Breaded & Buttered Combo", quantity: 2, lineTotal: 140 },
+      { name: "Jollof Rice Plate", quantity: 1, lineTotal: 70 }
     ]
   },
   {
-    title: "Preparing",
-    orders: [
-      { ref: "CNG-0005", items: "3x Spicy Chicken", time: "12 min ago" },
-      { ref: "CNG-0006", items: "1x Jerk Chicken", time: "15 min ago" }
+    reference: "CNG-0005",
+    customerName: "Delivery customer",
+    status: "Preparing",
+    subtotal: 145,
+    orderMode: "Delivery",
+    createdAt: "12 min ago",
+    items: [
+      { name: "Spicy Well-Seasoned Chicken", quantity: 1, lineTotal: 65 },
+      { name: "Herb Butter Rice", quantity: 1, lineTotal: 75 }
     ]
   },
   {
-    title: "Ready",
-    orders: [{ ref: "CNG-0003", items: "Chicken & Fries Combo", time: "Ready now" }]
+    reference: "CNG-0003",
+    customerName: "Kerbside pickup",
+    status: "Ready",
+    subtotal: 85,
+    orderMode: "Kerbside Pickup",
+    createdAt: "Ready now",
+    items: [{ name: "Jerk Chicken Option", quantity: 1, lineTotal: 85 }]
   }
 ];
 
+function normalizeStatus(value: unknown) {
+  const status = String(value || "Pending");
+  if (status === "Accepted") return "Pending";
+  if (status === "Out for delivery") return "Ready";
+  if (status === "Cancelled") return "Completed";
+  return status;
+}
+
+function getOrderItems(order: AdminOrder) {
+  const rawItems = Array.isArray(order.items) ? order.items : [];
+  return rawItems.map((item) => ({
+    name: String(item.name || "Menu item"),
+    quantity: Number(item.quantity || 1),
+    lineTotal: Number(item.lineTotal || 0)
+  }));
+}
+
 export default function KitchenPage() {
+  const router = useRouter();
+  const [orders, setOrders] = useState<AdminOrder[]>(fallbackOrders);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [lastUpdated, setLastUpdated] = useState("Not synced yet");
+
+  async function loadOrders() {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await fetchAdminOrders();
+      setOrders(data.length ? data : fallbackOrders);
+      setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    } catch (err) {
+      if (err instanceof Error && err.message.toLowerCase().includes("authentication")) {
+        router.replace("/admin/login");
+        return;
+      }
+      setError(err instanceof Error ? err.message : "Could not load kitchen orders");
+      setOrders(fallbackOrders);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadOrders();
+  }, []);
+
+  function logout() {
+    clearAdminToken();
+    router.replace("/admin/login");
+  }
+
+  const groupedOrders = useMemo(() => {
+    return statusLanes.map((lane) => ({
+      ...lane,
+      orders: orders.filter((order) => normalizeStatus(order.status) === lane.status)
+    }));
+  }, [orders]);
+
+  const activeOrders = orders.filter((order) => !["Completed", "Cancelled"].includes(String(order.status))).length;
+  const readyOrders = orders.filter((order) => normalizeStatus(order.status) === "Ready").length;
+
   return (
-    <main className="min-h-screen bg-charcoal text-cream">
-      <div className="noise-overlay" />
-      <AppHeader variant="admin" />
+    <main className="min-h-screen bg-[#f6f1ea] text-[#16110d]">
+      <header className="sticky top-0 z-40 border-b border-black/10 bg-white/95 backdrop-blur-md">
+        <nav className="mx-auto flex h-16 max-w-[1500px] items-center justify-between gap-3 px-4 md:px-6">
+          <a href="/admin" className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-2xl bg-[#d86b2b] text-sm font-black text-white">CNG</span>
+            <div>
+              <p className="text-sm font-black">Kitchen Display</p>
+              <p className="text-xs font-semibold text-[#76675d]">Private staff area</p>
+            </div>
+          </a>
+          <div className="flex items-center gap-2">
+            <a href="/admin" className="hidden rounded-full bg-[#efe0d0] px-4 py-2 text-sm font-black text-[#16110d] sm:inline-flex">Admin</a>
+            <button onClick={() => void loadOrders()} className="rounded-full bg-[#241713] px-4 py-2 text-sm font-black text-white">Refresh</button>
+            <button onClick={logout} className="hidden rounded-full bg-white px-4 py-2 text-sm font-black text-[#76675d] ring-1 ring-black/10 sm:inline-flex">Logout</button>
+          </div>
+        </nav>
+      </header>
 
-      <section className="mx-auto max-w-7xl px-5 py-10">
-        <p className="text-sm font-black uppercase tracking-[0.28em] text-flame">Operations screen</p>
-        <h1 className="mt-3 text-4xl font-black md:text-6xl">Move orders from new to ready.</h1>
-        <p className="mt-4 max-w-3xl text-cream/65">This static kitchen screen prepares the workflow for cooks and staff before real-time backend order updates are connected.</p>
+      <section className="mx-auto max-w-[1500px] px-4 py-5 md:px-6 md:py-7">
+        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+          <div>
+            <span className="inline-flex rounded-full bg-[#efe0d0] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#9d431f]">Kitchen operations</span>
+            <h1 className="mt-4 text-4xl font-black tracking-[-0.04em] md:text-6xl">Orders at a glance</h1>
+            <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#76675d]">
+              A clean kitchen board for staff to see new, preparing, ready, and completed orders without touching the customer app.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 md:min-w-[390px]">
+            <div className="rounded-3xl bg-white p-4 shadow-[0_18px_50px_rgba(36,23,19,0.08)] ring-1 ring-black/5">
+              <p className="text-xs font-bold text-[#76675d]">Active</p>
+              <p className="mt-1 text-3xl font-black">{activeOrders}</p>
+            </div>
+            <div className="rounded-3xl bg-white p-4 shadow-[0_18px_50px_rgba(36,23,19,0.08)] ring-1 ring-black/5">
+              <p className="text-xs font-bold text-[#76675d]">Ready</p>
+              <p className="mt-1 text-3xl font-black">{readyOrders}</p>
+            </div>
+            <div className="rounded-3xl bg-white p-4 shadow-[0_18px_50px_rgba(36,23,19,0.08)] ring-1 ring-black/5">
+              <p className="text-xs font-bold text-[#76675d]">Synced</p>
+              <p className="mt-2 text-sm font-black">{lastUpdated}</p>
+            </div>
+          </div>
+        </div>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {lanes.map((lane) => (
-            <section key={lane.title} className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-black">{lane.title}</h2>
-                <span className="rounded-full border border-gold/30 px-3 py-1 text-sm font-black text-gold">{lane.orders.length}</span>
+        {error ? (
+          <div className="mt-5 rounded-3xl bg-red-50 p-4 text-sm font-bold text-red-700">
+            {error}. Showing sample kitchen tickets until the backend is reachable and you are logged in.
+          </div>
+        ) : null}
+
+        {isLoading ? <p className="mt-5 text-sm font-bold text-[#76675d]">Loading kitchen orders...</p> : null}
+
+        <div className="mt-6 grid gap-4 xl:grid-cols-4">
+          {groupedOrders.map((lane) => (
+            <section key={lane.status} className={`min-h-[420px] rounded-[32px] ${lane.tone} p-4 shadow-[0_18px_50px_rgba(36,23,19,0.08)] ring-1 ring-black/5`}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-black">{lane.title}</h2>
+                  <p className="mt-1 text-sm font-semibold text-[#76675d]">{lane.helper}</p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-[#9d431f] ring-1 ring-black/5">{lane.orders.length}</span>
               </div>
-              <div className="mt-5 space-y-4">
-                {lane.orders.map((order) => (
-                  <article key={order.ref} className="rounded-3xl border border-white/10 bg-black/20 p-5">
-                    <p className="font-black text-gold">{order.ref}</p>
-                    <p className="mt-2 leading-7 text-cream/70">{order.items}</p>
-                    <p className="mt-3 text-sm text-cream/45">{order.time}</p>
-                    <button className="mt-5 w-full rounded-full bg-cream px-5 py-3 text-sm font-black text-charcoal hover:bg-gold">Move Forward</button>
-                  </article>
-                ))}
+
+              <div className="mt-4 space-y-3">
+                {lane.orders.length === 0 ? (
+                  <div className="grid min-h-[180px] place-items-center rounded-3xl bg-white/70 p-5 text-center text-sm font-bold text-[#76675d]">
+                    No orders here
+                  </div>
+                ) : null}
+
+                {lane.orders.map((order) => {
+                  const items = getOrderItems(order);
+                  return (
+                    <article key={String(order.reference)} className="rounded-3xl bg-white p-4 shadow-[0_10px_30px_rgba(36,23,19,0.07)] ring-1 ring-black/5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-lg font-black">{String(order.reference)}</p>
+                          <p className="mt-1 text-xs font-bold text-[#76675d]">{String(order.customerName || "Customer")} · {String(order.orderMode || "Order")}</p>
+                        </div>
+                        <span className="rounded-full bg-[#fff8ef] px-3 py-1 text-xs font-black text-[#9d431f]">GH₵{Number(order.subtotal || 0)}</span>
+                      </div>
+
+                      <div className="mt-4 space-y-2">
+                        {items.map((item) => (
+                          <div key={`${order.reference}-${item.name}`} className="flex justify-between gap-3 rounded-2xl bg-[#f6f1ea] px-3 py-2 text-sm font-bold">
+                            <span>{item.quantity}× {item.name}</span>
+                            <span className="text-[#76675d]">GH₵{item.lineTotal}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-3 text-xs font-bold text-[#76675d]">
+                        <span>{String(order.createdAt || "New")}</span>
+                        <span>{String(order.status || "Pending")}</span>
+                      </div>
+
+                      <button className="mt-4 w-full rounded-full bg-[#d86b2b] px-4 py-3 text-sm font-black text-white">
+                        Move forward
+                      </button>
+                    </article>
+                  );
+                })}
               </div>
             </section>
           ))}
