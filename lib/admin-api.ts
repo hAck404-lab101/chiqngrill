@@ -1,4 +1,5 @@
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
+const API_ORIGIN = API_BASE.replace(/\/api$/, "");
 const ADMIN_TOKEN_KEY = "chiqngrill-admin-token";
 
 export type AdminDashboard = {
@@ -37,6 +38,12 @@ export function saveAdminToken(token: string) {
 
 export function clearAdminToken() {
   window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
+export function resolveAssetUrl(url?: string) {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+  return `${API_ORIGIN}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
 async function adminFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -80,6 +87,31 @@ export async function adminLogin(email: string, password: string) {
   return payload.data;
 }
 
+export async function uploadAdminImage(file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE}/uploads/image`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getAdminToken()}`
+      },
+      body: formData
+    });
+  } catch {
+    throw new Error(`Backend is not reachable. Start the API with npm run dev:api, then test ${API_BASE.replace(/\/api$/, "")}/health`);
+  }
+
+  const payload = await response.json();
+  if (!response.ok || payload.success === false) {
+    throw new Error(payload.message || "Image upload failed");
+  }
+  return payload.data as { fileName: string; fileUrl: string; size: number; mimeType: string };
+}
+
 export async function fetchAdminDashboard() {
   return adminFetch<AdminDashboard>("/admin/dashboard");
 }
@@ -95,6 +127,19 @@ export async function createAdminMenuItem(payload: Record<string, string | numbe
   });
 }
 
+export async function updateAdminMenuItem(id: string, payload: Record<string, string | number | boolean>) {
+  return adminFetch<AdminMenuItem>(`/admin/menu/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteAdminMenuItem(id: string) {
+  return adminFetch<AdminMenuItem>(`/admin/menu/${encodeURIComponent(id)}`, {
+    method: "DELETE"
+  });
+}
+
 export async function fetchAdminGallery() {
   return adminFetch<AdminGalleryItem[]>("/admin/gallery");
 }
@@ -102,6 +147,13 @@ export async function fetchAdminGallery() {
 export async function createAdminGalleryItem(payload: Record<string, string | boolean>) {
   return adminFetch<AdminGalleryItem>("/admin/gallery", {
     method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateAdminGalleryItem(id: string, payload: Record<string, string | boolean>) {
+  return adminFetch<AdminGalleryItem>(`/admin/gallery/${encodeURIComponent(id)}`, {
+    method: "PATCH",
     body: JSON.stringify(payload)
   });
 }
