@@ -4,10 +4,10 @@
 
 :root {
   --ink: #18120f;
-  --muted: #7a6b62;
+  --muted: #75685f;
   --paper: #fff8ef;
   --surface: #ffffff;
-  --soft: #f4e6d8;
+  --soft: #f5eadf;
   --brand: #d86b2b;
   --brand-dark: #a7441f;
   --dark: #241713;
@@ -17,6 +17,7 @@
   --radius-md: 20px;
   --radius-lg: 28px;
   --shadow-soft: 0 18px 50px rgba(36, 23, 19, 0.08);
+  --shadow-card: 0 12px 30px rgba(36, 23, 19, 0.06);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -67,11 +68,26 @@ textarea {
   }
 
   .app-container {
-    width: min(1120px, calc(100% - 32px));
+    width: min(1120px, calc(100% - 28px));
     margin-inline: auto;
   }
 
-  .surface {
+  .store-shell {
+    width: min(980px, calc(100% - 24px));
+    margin-inline: auto;
+  }
+
+  .store-strip {
+    background: var(--dark);
+    color: white;
+    font-size: 0.82rem;
+    font-weight: 850;
+    text-align: center;
+    padding: 0.75rem 1rem;
+  }
+
+  .surface,
+  .store-card {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
@@ -82,6 +98,38 @@ textarea {
     background: var(--soft);
     border: 1px solid rgba(24, 18, 15, 0.06);
     border-radius: var(--radius-lg);
+  }
+
+  .store-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 30px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .store-product {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .store-product:hover {
+    transform: translateY(-1px);
+  }
+
+  .store-avatar {
+    display: grid;
+    place-items: center;
+    width: 86px;
+    height: 86px;
+    border-radius: 26px;
+    background: var(--brand);
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 950;
+    box-shadow: 0 16px 36px rgba(216, 107, 43, 0.28);
   }
 
   .food-tile {
@@ -101,6 +149,14 @@ textarea {
     height: 150px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.26);
+  }
+
+  .product-image {
+    min-height: 150px;
+    border-radius: 20px;
+    background:
+      radial-gradient(circle at 78% 18%, rgba(255,255,255,0.35), transparent 28%),
+      linear-gradient(135deg, #2b1710 0%, #d86b2b 60%, #f3b35f 100%);
   }
 
   .btn-primary,
@@ -174,7 +230,8 @@ textarea {
     line-height: 0.98;
   }
 
-  .pill {
+  .pill,
+  .store-chip {
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
@@ -183,5 +240,18 @@ textarea {
     padding: 0.45rem 0.75rem;
     font-size: 0.78rem;
     font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .store-category {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.7rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 900;
+    white-space: nowrap;
+    transition: all 160ms var(--ease);
   }
 }
