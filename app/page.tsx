@@ -1,5 +1,6 @@
 import { AppHeader } from "@/components/app-header";
 import { CTAButton } from "@/components/cta-button";
+import { fetchHomepageContent, resolvePublicAssetUrl } from "@/lib/api-client";
 import { menuItems, restaurant, reviewHighlights } from "@/lib/restaurant-data";
 
 const featuredItems = menuItems.slice(0, 6);
@@ -11,15 +12,21 @@ const serviceLinks = [
   { label: "Delivery", href: "/delivery" }
 ];
 
-export default function Home() {
+export default async function Home() {
+  const homepage = await fetchHomepageContent();
+  const heroImage = resolvePublicAssetUrl(homepage.heroImageUrl);
+
   return (
     <main className="app-page overflow-hidden">
-      <div className="store-strip">Order online · Pickup · Delivery · Dine-in at Papa Monrovia Street, Accra</div>
+      <div className="store-strip">{homepage.announcement || "Order online · Pickup · Delivery · Dine-in at Papa Monrovia Street, Accra"}</div>
       <AppHeader />
 
       <section className="store-shell py-6 md:py-8">
         <div className="store-panel overflow-hidden">
-          <div className="h-40 bg-[linear-gradient(135deg,#241713_0%,#d86b2b_58%,#f3b35f_100%)] md:h-56" />
+          <div
+            className="h-40 bg-[linear-gradient(135deg,#241713_0%,#d86b2b_58%,#f3b35f_100%)] bg-cover bg-center md:h-56"
+            style={heroImage ? { backgroundImage: `linear-gradient(0deg, rgba(36,23,19,0.18), rgba(36,23,19,0.18)), url(${heroImage})` } : undefined}
+          />
           <div className="px-5 pb-6 md:px-8 md:pb-8">
             <div className="-mt-12 flex flex-col gap-5 md:-mt-14 md:flex-row md:items-end md:justify-between">
               <div className="flex items-end gap-4">
@@ -28,7 +35,7 @@ export default function Home() {
                   <p className="store-chip">Chicken restaurant</p>
                   <h1 className="mt-2 text-4xl font-black tracking-[-0.045em] md:text-6xl">Chiq-N-Grill</h1>
                   <p className="mt-2 max-w-xl text-sm font-semibold leading-6 text-[var(--muted)]">
-                    Well-seasoned chicken, jollof, rice meals, sides, pickup, delivery, and dine-in requests from Accra.
+                    {homepage.heroSubtitle || "Well-seasoned chicken, jollof, rice meals, sides, pickup, delivery, and dine-in requests from Accra."}
                   </p>
                 </div>
               </div>
