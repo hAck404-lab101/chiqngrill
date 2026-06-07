@@ -7,12 +7,16 @@ import { clearCart, getCartItems, getCartSubtotal, updateCartItemQuantity, type 
 import { createOrder } from "@/lib/api-client";
 
 const orderModes = ["Dine-in", "Pickup", "Kerbside Pickup", "Delivery"] as const;
+const paymentMethods = ["Pay at restaurant", "Mobile Money on delivery", "Mobile Money after confirmation", "Cash on delivery"] as const;
+
 type OrderMode = (typeof orderModes)[number];
+type PaymentMethod = (typeof paymentMethods)[number];
 
 export default function OrderPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [hasLoadedCart, setHasLoadedCart] = useState(false);
   const [orderMode, setOrderMode] = useState<OrderMode>("Pickup");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Pay at restaurant");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -38,8 +42,22 @@ export default function OrderPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (orderMode === "Delivery" && paymentMethod === "Pay at restaurant") {
+      setPaymentMethod("Mobile Money on delivery");
+    }
+    if ((orderMode === "Pickup" || orderMode === "Dine-in" || orderMode === "Kerbside Pickup") && paymentMethod === "Cash on delivery") {
+      setPaymentMethod("Pay at restaurant");
+    }
+  }, [orderMode, paymentMethod]);
+
   const subtotal = useMemo(() => getCartSubtotal(cartItems), [cartItems]);
   const isCartEmpty = hasLoadedCart && cartItems.length === 0;
+  const availablePaymentMethods = paymentMethods.filter((method) => {
+    if (orderMode !== "Delivery" && method === "Cash on delivery") return false;
+    if (orderMode === "Delivery" && method === "Pay at restaurant") return false;
+    return true;
+  });
 
   function handleQuantityChange(itemId: string, quantity: number) {
     setCartItems(updateCartItemQuantity(itemId, quantity));
@@ -69,6 +87,11 @@ export default function OrderPage() {
       return;
     }
 
+    if (!paymentMethod) {
+      setError("Select a payment method.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const order = await createOrder({
@@ -77,6 +100,7 @@ export default function OrderPage() {
         orderMode,
         deliveryAddress: address.trim(),
         notes: notes.trim(),
+        paymentMethod,
         items: cartItems.map((item) => ({ menuItemId: item.id, quantity: item.quantity }))
       });
 
@@ -99,7 +123,7 @@ export default function OrderPage() {
           <p className="eyebrow">Cart</p>
           <h1 className="app-title mt-2 text-4xl md:text-6xl">Confirm your order</h1>
           <p className="mt-3 max-w-xl text-base font-medium leading-7 text-[var(--muted)]">
-            Review your meals, choose how you want them served, and submit directly to the restaurant system.
+            Review your meals, choose how you want them served, choose payment, and submit directly to the restaurant system.
           </p>
 
           <div className="surface mt-6 p-4 md:p-5">
@@ -141,12 +165,24 @@ export default function OrderPage() {
 
         <div className="surface p-4 md:p-5">
           <h2 className="text-2xl font-black">Checkout</h2>
+          <p className="mt-1 text-sm font-semibold text-[var(--muted)]">Choose service type and payment method before placing the order.</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {orderModes.map((mode) => (
               <button key={mode} type="button" onClick={() => setOrderMode(mode)} className={`rounded-full px-3 py-3 text-sm font-extrabold ${orderMode === mode ? "bg-[var(--dark)] text-white" : "bg-[var(--soft)] text-[var(--ink)]"}`}>
                 {mode}
               </button>
             ))}
+          </div>
+
+          <div className="mt-5 rounded-3xl bg-[var(--paper)] p-3">
+            <p className="text-sm font-black">Payment method</p>
+            <div className="mt-3 grid gap-2">
+              {availablePaymentMethods.map((method) => (
+                <button key={method} type="button" onClick={() => setPaymentMethod(method)} className={`rounded-2xl px-4 py-3 text-left text-sm font-black ${paymentMethod === method ? "bg-[var(--brand)] text-white" : "bg-white text-[var(--ink)] ring-1 ring-[var(--line)]"}`}>
+                  {method}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mt-5 grid gap-4">
@@ -161,6 +197,7 @@ export default function OrderPage() {
             <div className="mt-4 rounded-2xl bg-green-50 p-4 text-green-800">
               <p className="text-sm font-bold">Order created</p>
               <p className="mt-1 text-xl font-black">{createdReference}</p>
+              <p className="mt-2 text-sm font-bold">Payment: {paymentMethod}</p>
               <a href={`/track?ref=${encodeURIComponent(createdReference)}`} className="mt-3 inline-flex text-sm font-black text-green-900">Track order</a>
             </div>
           ) : null}
