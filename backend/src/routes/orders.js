@@ -1,6 +1,7 @@
 const express = require('express');
-const { menuItems, orders, saveData } = require('../../data/seed');
+const { menuItems, orders, settings, addAuditLog, saveData } = require('../../data/seed');
 const { createOrderReference } = require('../utils/orderReference');
+const { assertOrderingAllowed, calculateOrderCharges } = require('../utils/businessRules');
 
 const router = express.Router();
 
@@ -18,6 +19,12 @@ function calculateItems(items = []) {
     const menuItem = menuItems.find((entry) => entry.id === item.menuItemId);
     if (!menuItem) {
       const error = new Error(`Invalid menu item: ${item.menuItemId}`);
+      error.status = 400;
+      throw error;
+    }
+
+    if (menuItem.available === false) {
+      const error = new Error(`${menuItem.name} is currently unavailable.`);
       error.status = 400;
       throw error;
     }
@@ -40,6 +47,8 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res, next) => {
   try {
+    assertOrderingAllowed(settings);
+
     const { customerName, phone, orderMode, deliveryAddress, notes, items, paymentMethod } = req.body;
 
     if (!customerName || !phone) {
@@ -64,6 +73,7 @@ router.post('/', (req, res, next) => {
 
     const orderItems = calculateItems(items);
     const subtotal = orderItems.reduce((total, item) => total + item.lineTotal, 0);
+    const charges = calculateOrderCharges({ subtotal, orderMode, deliveryAddress, settings });
     const reference = createOrderReference();
 
     const order = {
@@ -75,7 +85,11 @@ router.post('/', (req, res, next) => {
       deliveryAddress: deliveryAddress || null,
       notes: notes || '',
       items: orderItems,
-      subtotal,
+      subtotal: charges.subtotal,
+      serviceFee: charges.serviceFee,
+      deliveryFee: charges.deliveryFee,
+      total: charges.total,
+      deliveryZone: charges.deliveryZone,
       status: 'Pending',
       paymentMethod,
       paymentStatus: paymentMethod === 'Pay at restaurant' || paymentMethod === 'Cash on delivery' ? 'Pay on arrival' : 'Awaiting confirmation',
@@ -85,6 +99,7 @@ router.post('/', (req, res, next) => {
 
     orders.unshift(order);
     saveData();
+    addAuditLog('order.created', 'customer', { reference, total: order.total, orderMode, paymentMethod });
 
     res.status(201).json({ success: true, message: 'Order created successfully', data: order });
   } catch (error) {
@@ -107,9 +122,11 @@ router.patch('/:reference/status', (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid order status' });
   }
 
+  const oldStatus = order.status;
   order.status = status;
   order.updatedAt = new Date().toISOString();
   saveData();
+  addAuditLog('order.status_changed', 'system', { reference: order.reference, from: oldStatus, to: status });
 
   res.json({ success: true, message: 'Order status updated', data: order });
 });
