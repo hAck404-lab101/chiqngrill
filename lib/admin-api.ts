@@ -250,6 +250,13 @@ export async function fetchAdminReservations() {
   return adminFetch<AdminReservation[]>("/admin/reservations");
 }
 
+export async function updateAdminReservationStatus(reference: string, status: string) {
+  return adminFetch<AdminReservation>(`/admin/reservations/${encodeURIComponent(reference)}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status })
+  });
+}
+
 export async function resetDemoData() {
   return adminFetch<{ message?: string }>("/admin/reset-demo", { method: "POST" });
 }
