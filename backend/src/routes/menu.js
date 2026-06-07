@@ -1,5 +1,5 @@
 const express = require('express');
-const { menuItems, restaurant } = require('../../data/seed');
+const { menuItems, restaurant, homepageContent } = require('../../data/seed');
 
 const router = express.Router();
 
@@ -36,6 +36,10 @@ router.get('/categories', (req, res) => {
 
 router.get('/restaurant', (req, res) => {
   res.json({ success: true, data: restaurant });
+});
+
+router.get('/homepage', (req, res) => {
+  res.json({ success: true, data: homepageContent });
 });
 
 router.get('/:id', (req, res) => {
