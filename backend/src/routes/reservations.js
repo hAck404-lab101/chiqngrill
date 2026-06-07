@@ -1,8 +1,13 @@
 const express = require('express');
-const { reservations } = require('../../data/seed');
+const { reservations, saveData } = require('../../data/seed');
 const { createOrderReference } = require('../utils/orderReference');
 
 const router = express.Router();
+
+function findReservation(reference) {
+  const cleanReference = decodeURIComponent(String(reference || '')).trim().toUpperCase();
+  return reservations.find((entry) => String(entry.reference || '').trim().toUpperCase() === cleanReference);
+}
 
 router.get('/', (req, res) => {
   res.json({ success: true, data: reservations });
@@ -31,12 +36,13 @@ router.post('/', (req, res) => {
   };
 
   reservations.unshift(reservation);
+  saveData();
 
   res.status(201).json({ success: true, message: 'Reservation request created successfully', data: reservation });
 });
 
 router.patch('/:reference/status', (req, res) => {
-  const reservation = reservations.find((entry) => entry.reference === req.params.reference);
+  const reservation = findReservation(req.params.reference);
   if (!reservation) return res.status(404).json({ success: false, message: 'Reservation not found' });
 
   const allowedStatuses = ['Pending', 'Confirmed', 'Declined', 'Completed', 'Cancelled'];
@@ -48,6 +54,7 @@ router.patch('/:reference/status', (req, res) => {
 
   reservation.status = status;
   reservation.updatedAt = new Date().toISOString();
+  saveData();
 
   res.json({ success: true, message: 'Reservation status updated', data: reservation });
 });
