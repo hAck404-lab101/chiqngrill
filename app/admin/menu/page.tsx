@@ -56,6 +56,8 @@ export default function AdminMenuPage() {
   const [items, setItems] = useState<AdminMenuItem[]>([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [modalError, setModalError] = useState("");
+  const [modalSuccess, setModalSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -81,6 +83,8 @@ export default function AdminMenuPage() {
     setForm(emptyForm);
     setError("");
     setSuccess("");
+    setModalError("");
+    setModalSuccess("");
     setIsModalOpen(true);
   }
 
@@ -89,6 +93,8 @@ export default function AdminMenuPage() {
     setForm(formFromItem(item));
     setError("");
     setSuccess("");
+    setModalError("");
+    setModalSuccess("");
     setIsModalOpen(true);
   }
 
@@ -97,6 +103,8 @@ export default function AdminMenuPage() {
     setIsModalOpen(false);
     setEditingId("");
     setForm(emptyForm);
+    setModalError("");
+    setModalSuccess("");
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -104,8 +112,17 @@ export default function AdminMenuPage() {
     setIsSaving(true);
     setError("");
     setSuccess("");
+    setModalError("");
+    setModalSuccess("");
 
-    const payload = { ...form, priceFrom: Number(form.priceFrom) };
+    const price = Number(form.priceFrom);
+    if (!Number.isFinite(price) || price <= 0) {
+      setModalError("Enter a valid price greater than 0.");
+      setIsSaving(false);
+      return;
+    }
+
+    const payload = { ...form, priceFrom: price };
 
     try {
       if (editingId) {
@@ -120,7 +137,7 @@ export default function AdminMenuPage() {
       setIsModalOpen(false);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save item");
+      setModalError(err instanceof Error ? err.message : "Could not save item");
     } finally {
       setIsSaving(false);
     }
@@ -130,12 +147,14 @@ export default function AdminMenuPage() {
     if (!file) return;
     setIsUploading(true);
     setError("");
+    setModalError("");
+    setModalSuccess("");
     try {
       const uploaded = await uploadAdminImage(file);
       setForm((current) => ({ ...current, imageUrl: uploaded.fileUrl }));
-      setSuccess("Image uploaded and attached to form.");
+      setModalSuccess("Image uploaded and attached to this meal.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setModalError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
     }
@@ -166,9 +185,7 @@ export default function AdminMenuPage() {
             <h2 className="text-2xl font-black">Current meals</h2>
             <p className="mt-1 text-sm font-semibold text-[#76675d]">Manage every meal from one clean list.</p>
           </div>
-          <button type="button" onClick={openAddModal} className="rounded-full bg-[#d86b2b] px-5 py-3 text-sm font-black text-white">
-            Add meal
-          </button>
+          <button type="button" onClick={openAddModal} className="rounded-full bg-[#d86b2b] px-5 py-3 text-sm font-black text-white">Add meal</button>
         </div>
 
         {isLoading ? <p className="mt-4 text-sm font-bold text-[#76675d]">Loading menu...</p> : null}
@@ -206,20 +223,18 @@ export default function AdminMenuPage() {
               <button type="button" onClick={closeModal} className="grid size-10 place-items-center rounded-full bg-[#fff8ef] text-xl font-black">×</button>
             </div>
 
-            <form onSubmit={submit} className="mt-5 grid gap-4">
-              {form.imageUrl ? (
-                <img src={resolveAssetUrl(form.imageUrl)} alt="Menu preview" className="h-48 w-full rounded-3xl object-cover" />
-              ) : <div className="grid h-48 place-items-center rounded-3xl bg-[#fff8ef] text-sm font-black text-[#9d431f]">No image selected</div>}
+            {modalError ? <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{modalError}</p> : null}
+            {modalSuccess ? <p className="mt-4 rounded-2xl bg-green-50 p-3 text-sm font-bold text-green-800">{modalSuccess}</p> : null}
 
-              <label className="grid gap-2 text-sm font-black">
-                Upload image
-                <input type="file" accept="image/*" onChange={(event) => void handleUpload(event.target.files?.[0])} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" />
-              </label>
+            <form onSubmit={submit} className="mt-5 grid gap-4">
+              {form.imageUrl ? <img src={resolveAssetUrl(form.imageUrl)} alt="Menu preview" className="h-48 w-full rounded-3xl object-cover" /> : <div className="grid h-48 place-items-center rounded-3xl bg-[#fff8ef] text-sm font-black text-[#9d431f]">No image selected</div>}
+
+              <label className="grid gap-2 text-sm font-black">Upload image<input type="file" accept="image/*" onChange={(event) => void handleUpload(event.target.files?.[0])} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" /></label>
               {isUploading ? <p className="text-sm font-bold text-[#76675d]">Uploading image...</p> : null}
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" placeholder="Meal name" />
-                <input required value={form.priceFrom} onChange={(e) => setForm({ ...form, priceFrom: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" placeholder="Price e.g. 70" />
+                <input required type="number" min="1" value={form.priceFrom} onChange={(e) => setForm({ ...form, priceFrom: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" placeholder="Price e.g. 70" />
               </div>
 
               <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" placeholder="Category" />
@@ -236,7 +251,7 @@ export default function AdminMenuPage() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <button type="button" onClick={closeModal} className="rounded-full bg-[#efe0d0] px-5 py-4 font-black text-[#16110d]">Cancel</button>
-                <button disabled={isSaving || isUploading} className="rounded-full bg-[#d86b2b] px-5 py-4 font-black text-white disabled:opacity-60">{isSaving ? "Saving..." : editingId ? "Save Changes" : "Add Meal"}</button>
+                <button type="submit" disabled={isSaving || isUploading} className="rounded-full bg-[#d86b2b] px-5 py-4 font-black text-white disabled:opacity-60">{isSaving ? "Saving..." : editingId ? "Save Changes" : "Add Meal"}</button>
               </div>
             </form>
           </div>
