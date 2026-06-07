@@ -5,10 +5,16 @@ const { createAdminToken, requireAdmin, validateAdminLogin, getAdminConfig } = r
 const router = express.Router();
 
 const orderStatuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for delivery', 'Completed', 'Cancelled'];
+const reservationStatuses = ['Pending', 'Confirmed', 'Declined', 'Completed', 'Cancelled'];
 
 function findOrderByReference(reference) {
   const cleanReference = decodeURIComponent(String(reference || '')).trim().toUpperCase();
   return orders.find((entry) => String(entry.reference || '').trim().toUpperCase() === cleanReference);
+}
+
+function findReservationByReference(reference) {
+  const cleanReference = decodeURIComponent(String(reference || '')).trim().toUpperCase();
+  return reservations.find((entry) => String(entry.reference || '').trim().toUpperCase() === cleanReference);
 }
 
 function normalizeOrderStatus(status) {
@@ -219,6 +225,22 @@ router.post('/orders/:reference/move-forward', requireAdmin, (req, res) => {
 
 router.get('/reservations', requireAdmin, (req, res) => {
   res.json({ success: true, data: reservations });
+});
+
+router.patch('/reservations/:reference/status', requireAdmin, (req, res) => {
+  const reservation = findReservationByReference(req.params.reference);
+  if (!reservation) return res.status(404).json({ success: false, message: 'Reservation not found' });
+
+  const { status } = req.body;
+  if (!reservationStatuses.includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid reservation status' });
+  }
+
+  reservation.status = status;
+  reservation.updatedAt = new Date().toISOString();
+  saveData();
+
+  res.json({ success: true, message: 'Reservation status updated', data: reservation });
 });
 
 router.post('/reset-demo', requireAdmin, (req, res) => {
