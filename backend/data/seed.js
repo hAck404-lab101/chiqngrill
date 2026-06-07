@@ -17,6 +17,24 @@ const defaultData = {
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Chiq-N-Grill%20Papa%20Monrovia%20Street%20Accra',
     whatsappUrl: 'https://wa.me/233533615069?text=Hi%20Chiq-N-Grill%2C%20I%20want%20to%20place%20an%20order.'
   },
+  settings: {
+    orderingEnabled: true,
+    reservationsEnabled: true,
+    enforceBusinessHours: false,
+    serviceFee: 0,
+    businessHours: {
+      open: '11:00',
+      close: '23:00',
+      days: [0, 1, 2, 3, 4, 5, 6]
+    },
+    deliveryZones: [
+      { id: 'accra-central', name: 'Accra Central', fee: 20, keywords: ['accra central', 'central'] },
+      { id: 'osu', name: 'Osu', fee: 25, keywords: ['osu'] },
+      { id: 'east-legon', name: 'East Legon', fee: 35, keywords: ['east legon', 'legon'] },
+      { id: 'airport', name: 'Airport / Cantonments', fee: 35, keywords: ['airport', 'cantonments'] },
+      { id: 'other', name: 'Other Accra area', fee: 45, keywords: [] }
+    ]
+  },
   menuItems: [
     { id: 'breaded-buttered-combo', name: 'Breaded & Buttered Combo', category: 'Chicken Combos', description: 'Golden chicken with a crisp bite, built for serious cravings.', priceFrom: 70, spiceLevel: 'Medium', prepTime: '20–30 min', badge: 'Customer-loved', available: true, imageUrl: '' },
     { id: 'spicy-seasoned-chicken', name: 'Spicy Well-Seasoned Chicken', category: 'Chicken Combos', description: 'Juicy chicken with heat, depth, and grill-house character.', priceFrom: 65, spiceLevel: 'Hot', prepTime: '20–30 min', badge: 'Bold flavor', available: true, imageUrl: '' },
@@ -38,7 +56,8 @@ const defaultData = {
     announcement: 'Open from 11 AM'
   },
   orders: [],
-  reservations: []
+  reservations: [],
+  auditLogs: []
 };
 
 function readPersistedData() {
@@ -54,11 +73,18 @@ function readPersistedData() {
 function mergeData(defaults, saved) {
   return {
     restaurant: { ...defaults.restaurant, ...(saved.restaurant || {}) },
+    settings: {
+      ...defaults.settings,
+      ...(saved.settings || {}),
+      businessHours: { ...defaults.settings.businessHours, ...((saved.settings || {}).businessHours || {}) },
+      deliveryZones: Array.isArray((saved.settings || {}).deliveryZones) ? saved.settings.deliveryZones : defaults.settings.deliveryZones
+    },
     menuItems: Array.isArray(saved.menuItems) ? saved.menuItems : defaults.menuItems,
     galleryItems: Array.isArray(saved.galleryItems) ? saved.galleryItems : defaults.galleryItems,
     homepageContent: { ...defaults.homepageContent, ...(saved.homepageContent || {}) },
     orders: Array.isArray(saved.orders) ? saved.orders : defaults.orders,
-    reservations: Array.isArray(saved.reservations) ? saved.reservations : defaults.reservations
+    reservations: Array.isArray(saved.reservations) ? saved.reservations : defaults.reservations,
+    auditLogs: Array.isArray(saved.auditLogs) ? saved.auditLogs : defaults.auditLogs
   };
 }
 
@@ -69,12 +95,29 @@ function saveData() {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
+function addAuditLog(action, actor, details = {}) {
+  const log = {
+    id: `AUD-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    action,
+    actor: actor || 'system',
+    details,
+    createdAt: new Date().toISOString()
+  };
+  data.auditLogs.unshift(log);
+  data.auditLogs.splice(1000);
+  saveData();
+  return log;
+}
+
 module.exports = {
   restaurant: data.restaurant,
+  settings: data.settings,
   menuItems: data.menuItems,
   galleryItems: data.galleryItems,
   homepageContent: data.homepageContent,
   orders: data.orders,
   reservations: data.reservations,
+  auditLogs: data.auditLogs,
+  addAuditLog,
   saveData
 };
