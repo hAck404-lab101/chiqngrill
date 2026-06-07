@@ -9,6 +9,7 @@ export type OrderPayload = {
   orderMode: string;
   deliveryAddress?: string;
   notes?: string;
+  paymentMethod?: string;
   items: Array<{ menuItemId: string; quantity: number }>;
 };
 
@@ -20,6 +21,14 @@ export type ReservationPayload = {
   guests: number;
   occasion?: string;
   notes?: string;
+};
+
+export type HomepageContent = {
+  heroTitle: string;
+  heroSubtitle: string;
+  featuredMealId: string;
+  heroImageUrl: string;
+  announcement: string;
 };
 
 export type AdminLoginResponse = {
@@ -75,6 +84,13 @@ function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` };
 }
 
+export function resolvePublicAssetUrl(url?: string) {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+  const origin = API_BASE.replace(/\/api$/, "");
+  return `${origin}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
 export async function fetchMenu(): Promise<MenuItem[]> {
   try {
     return await apiFetch<MenuItem[]>("/menu");
@@ -91,12 +107,28 @@ export async function fetchRestaurant() {
   }
 }
 
+export async function fetchHomepageContent() {
+  try {
+    return await apiFetch<HomepageContent>("/menu/homepage");
+  } catch {
+    return {
+      heroTitle: "Order grilled chicken without the wait.",
+      heroSubtitle: "Browse the menu, add your meal, choose pickup or delivery, and send your order to Chiq-N-Grill.",
+      featuredMealId: "breaded-buttered-combo",
+      heroImageUrl: "",
+      announcement: "Open from 11 AM"
+    };
+  }
+}
+
 export async function createOrder(payload: OrderPayload) {
   return apiFetch<{
     reference: string;
     subtotal: number;
     status: string;
     orderMode: string;
+    paymentMethod?: string;
+    paymentStatus?: string;
   }>("/orders", {
     method: "POST",
     body: JSON.stringify(payload)
@@ -121,6 +153,8 @@ export async function fetchOrder(reference: string) {
     status: string;
     subtotal: number;
     orderMode: string;
+    paymentMethod?: string;
+    paymentStatus?: string;
     items: Array<{ name: string; quantity: number; lineTotal: number }>;
   }>(`/orders/${encodeURIComponent(reference)}`);
 }
