@@ -42,6 +42,16 @@ function isActivePath(pathname: string, searchParams: URLSearchParams, href: str
   return matchesPath && queryContainsRequiredParams(searchParams, query);
 }
 
+function CartIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6.5 7.5h14l-1.4 8.1a2 2 0 0 1-2 1.7H9.3a2 2 0 0 1-2-1.6L5.7 4.8H3.5" />
+      <path d="M9 20.3h.01" />
+      <path d="M17 20.3h.01" />
+    </svg>
+  );
+}
+
 export function AppHeader({ variant = "customer" }: AppHeaderProps) {
   const isAdmin = variant === "admin";
   const links = isAdmin ? adminLinks : customerLinks;
@@ -73,8 +83,8 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <a href={isAdmin ? "/kitchen" : "/order"} className="btn-dark hidden px-5 py-2.5 text-sm sm:inline-flex">
-            {isAdmin ? "Kitchen" : "Cart"}
+          <a href={isAdmin ? "/kitchen" : "/order"} className={`${isAdmin ? "rounded-full bg-[var(--dark)] px-4 py-2.5 text-sm font-black text-white" : "grid size-11 place-items-center rounded-2xl bg-[var(--dark)] text-white shadow-[var(--shadow-card)]"}`} aria-label={isAdmin ? "Open kitchen" : "Open cart"} title={isAdmin ? "Kitchen" : "Cart"}>
+            {isAdmin ? "Kitchen" : <CartIcon />}
           </a>
           {!isAdmin ? (
             <a href={restaurant.phoneHref} className="btn-primary hidden px-5 py-2.5 text-sm md:inline-flex">
