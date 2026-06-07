@@ -6,6 +6,7 @@ const router = express.Router();
 
 const validOrderModes = ['Dine-in', 'Pickup', 'Kerbside Pickup', 'Delivery'];
 const validStatuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for delivery', 'Completed', 'Cancelled'];
+const validPaymentMethods = ['Pay at restaurant', 'Mobile Money on delivery', 'Mobile Money after confirmation', 'Cash on delivery'];
 
 function findOrder(reference) {
   const cleanReference = decodeURIComponent(String(reference || '')).trim().toUpperCase();
@@ -39,7 +40,7 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res, next) => {
   try {
-    const { customerName, phone, orderMode, deliveryAddress, notes, items } = req.body;
+    const { customerName, phone, orderMode, deliveryAddress, notes, items, paymentMethod } = req.body;
 
     if (!customerName || !phone) {
       return res.status(400).json({ success: false, message: 'Customer name and phone are required' });
@@ -51,6 +52,10 @@ router.post('/', (req, res, next) => {
 
     if (orderMode === 'Delivery' && !deliveryAddress) {
       return res.status(400).json({ success: false, message: 'Delivery address is required for delivery orders' });
+    }
+
+    if (!validPaymentMethods.includes(paymentMethod)) {
+      return res.status(400).json({ success: false, message: 'Select a valid payment method' });
     }
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -72,7 +77,8 @@ router.post('/', (req, res, next) => {
       items: orderItems,
       subtotal,
       status: 'Pending',
-      paymentStatus: 'Unpaid',
+      paymentMethod,
+      paymentStatus: paymentMethod === 'Pay at restaurant' || paymentMethod === 'Cash on delivery' ? 'Pay on arrival' : 'Awaiting confirmation',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
