@@ -1,11 +1,16 @@
 const express = require('express');
-const { menuItems, orders } = require('../../data/seed');
+const { menuItems, orders, saveData } = require('../../data/seed');
 const { createOrderReference } = require('../utils/orderReference');
 
 const router = express.Router();
 
 const validOrderModes = ['Dine-in', 'Pickup', 'Kerbside Pickup', 'Delivery'];
 const validStatuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for delivery', 'Completed', 'Cancelled'];
+
+function findOrder(reference) {
+  const cleanReference = decodeURIComponent(String(reference || '')).trim().toUpperCase();
+  return orders.find((entry) => String(entry.reference || '').trim().toUpperCase() === cleanReference);
+}
 
 function calculateItems(items = []) {
   return items.map((item) => {
@@ -73,6 +78,7 @@ router.post('/', (req, res, next) => {
     };
 
     orders.unshift(order);
+    saveData();
 
     res.status(201).json({ success: true, message: 'Order created successfully', data: order });
   } catch (error) {
@@ -81,13 +87,13 @@ router.post('/', (req, res, next) => {
 });
 
 router.get('/:reference', (req, res) => {
-  const order = orders.find((entry) => entry.reference === req.params.reference);
+  const order = findOrder(req.params.reference);
   if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
   res.json({ success: true, data: order });
 });
 
 router.patch('/:reference/status', (req, res) => {
-  const order = orders.find((entry) => entry.reference === req.params.reference);
+  const order = findOrder(req.params.reference);
   if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
   const { status } = req.body;
@@ -97,6 +103,7 @@ router.patch('/:reference/status', (req, res) => {
 
   order.status = status;
   order.updatedAt = new Date().toISOString();
+  saveData();
 
   res.json({ success: true, message: 'Order status updated', data: order });
 });
