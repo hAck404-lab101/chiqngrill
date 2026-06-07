@@ -1,22 +1,8 @@
 const express = require('express');
-const { restaurant, menuItems, orders, reservations } = require('../../data/seed');
+const { restaurant, menuItems, galleryItems, homepageContent, orders, reservations, saveData } = require('../../data/seed');
 const { createAdminToken, requireAdmin, validateAdminLogin, getAdminConfig } = require('../utils/adminAuth');
 
 const router = express.Router();
-
-const galleryItems = [
-  { id: 'golden-chicken', title: 'Golden Chicken', category: 'Food', imageUrl: '', isFeatured: true },
-  { id: 'jollof-plate', title: 'Jollof Plate', category: 'Food', imageUrl: '', isFeatured: true },
-  { id: 'interior-mood', title: 'Interior Mood', category: 'Vibe', imageUrl: '', isFeatured: false }
-];
-
-const homepageContent = {
-  heroTitle: 'Order grilled chicken without the wait.',
-  heroSubtitle: 'Browse the menu, add your meal, choose pickup or delivery, and send your order to Chiq-N-Grill.',
-  featuredMealId: 'breaded-buttered-combo',
-  heroImageUrl: '',
-  announcement: 'Open from 11 AM'
-};
 
 const orderStatuses = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Out for delivery', 'Completed', 'Cancelled'];
 
@@ -123,6 +109,7 @@ router.post('/menu', requireAdmin, (req, res) => {
   };
 
   menuItems.unshift(item);
+  saveData();
   res.status(201).json({ success: true, message: 'Menu item added', data: item });
 });
 
@@ -135,6 +122,7 @@ router.patch('/menu/:id', requireAdmin, (req, res) => {
     priceFrom: req.body.priceFrom !== undefined ? Number(req.body.priceFrom) : item.priceFrom
   });
 
+  saveData();
   res.json({ success: true, message: 'Menu item updated', data: item });
 });
 
@@ -143,6 +131,7 @@ router.delete('/menu/:id', requireAdmin, (req, res) => {
   if (index === -1) return res.status(404).json({ success: false, message: 'Menu item not found' });
 
   const [deleted] = menuItems.splice(index, 1);
+  saveData();
   res.json({ success: true, message: 'Menu item deleted', data: deleted });
 });
 
@@ -164,6 +153,7 @@ router.post('/gallery', requireAdmin, (req, res) => {
   };
 
   galleryItems.unshift(item);
+  saveData();
   res.status(201).json({ success: true, message: 'Gallery item added', data: item });
 });
 
@@ -172,6 +162,7 @@ router.patch('/gallery/:id', requireAdmin, (req, res) => {
   if (!item) return res.status(404).json({ success: false, message: 'Gallery item not found' });
 
   Object.assign(item, req.body);
+  saveData();
   res.json({ success: true, message: 'Gallery item updated', data: item });
 });
 
@@ -181,6 +172,7 @@ router.get('/homepage', requireAdmin, (req, res) => {
 
 router.patch('/homepage', requireAdmin, (req, res) => {
   Object.assign(homepageContent, req.body);
+  saveData();
   res.json({ success: true, message: 'Homepage content updated', data: homepageContent });
 });
 
@@ -190,6 +182,7 @@ router.get('/settings', requireAdmin, (req, res) => {
 
 router.patch('/settings', requireAdmin, (req, res) => {
   Object.assign(restaurant, req.body);
+  saveData();
   res.json({ success: true, message: 'Settings updated', data: restaurant });
 });
 
@@ -208,6 +201,7 @@ router.patch('/orders/:reference/status', requireAdmin, (req, res) => {
 
   order.status = status;
   order.updatedAt = new Date().toISOString();
+  saveData();
 
   res.json({ success: true, message: 'Order status updated', data: order });
 });
@@ -218,6 +212,7 @@ router.post('/orders/:reference/move-forward', requireAdmin, (req, res) => {
 
   order.status = getNextOrderStatus(order.status);
   order.updatedAt = new Date().toISOString();
+  saveData();
 
   res.json({ success: true, message: 'Order moved forward', data: order });
 });
@@ -229,6 +224,7 @@ router.get('/reservations', requireAdmin, (req, res) => {
 router.post('/reset-demo', requireAdmin, (req, res) => {
   orders.splice(0, orders.length);
   reservations.splice(0, reservations.length);
+  saveData();
   res.json({ success: true, message: 'Demo orders and reservations cleared' });
 });
 
