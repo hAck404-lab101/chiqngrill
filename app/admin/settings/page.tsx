@@ -5,9 +5,21 @@ import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
 import { fetchSiteSettings, updateSiteSettings } from "@/lib/admin-api";
 
+type RestaurantForm = {
+  name: string;
+  phone: string;
+  address: string;
+  plusCode: string;
+  openingNote: string;
+  mapsUrl: string;
+  whatsappUrl: string;
+};
+
+const emptyForm: RestaurantForm = { name: "", phone: "", address: "", plusCode: "", openingNote: "", mapsUrl: "", whatsappUrl: "" };
+
 export default function AdminSettingsPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", phone: "", address: "", plusCode: "", openingNote: "", mapsUrl: "", whatsappUrl: "" });
+  const [form, setForm] = useState<RestaurantForm>(emptyForm);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -17,14 +29,15 @@ export default function AdminSettingsPage() {
     async function load() {
       try {
         const data = await fetchSiteSettings();
+        const restaurant = (data.restaurant && typeof data.restaurant === "object" ? data.restaurant : data) as Record<string, unknown>;
         setForm({
-          name: String(data.name || ""),
-          phone: String(data.phone || ""),
-          address: String(data.address || ""),
-          plusCode: String(data.plusCode || ""),
-          openingNote: String(data.openingNote || ""),
-          mapsUrl: String(data.mapsUrl || ""),
-          whatsappUrl: String(data.whatsappUrl || "")
+          name: String(restaurant.name || ""),
+          phone: String(restaurant.phone || ""),
+          address: String(restaurant.address || ""),
+          plusCode: String(restaurant.plusCode || ""),
+          openingNote: String(restaurant.openingNote || ""),
+          mapsUrl: String(restaurant.mapsUrl || ""),
+          whatsappUrl: String(restaurant.whatsappUrl || "")
         });
       } catch (err) {
         if (err instanceof Error && err.message.toLowerCase().includes("authentication")) router.replace("/admin/login");
@@ -42,7 +55,7 @@ export default function AdminSettingsPage() {
     setSuccess("");
     setIsSaving(true);
     try {
-      await updateSiteSettings(form);
+      await updateSiteSettings({ restaurant: form });
       setSuccess("Settings saved.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save settings");
