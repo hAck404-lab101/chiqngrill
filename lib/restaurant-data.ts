@@ -8,6 +8,7 @@ export type MenuItem = {
   prepTime: string;
   badge: string;
   available: boolean;
+  imageUrl?: string;
 };
 
 export const restaurant = {
@@ -35,7 +36,8 @@ export const menuItems: MenuItem[] = [
     spiceLevel: "Medium",
     prepTime: "20–30 min",
     badge: "Customer-loved",
-    available: true
+    available: true,
+    imageUrl: ""
   },
   {
     id: "spicy-seasoned-chicken",
@@ -46,7 +48,8 @@ export const menuItems: MenuItem[] = [
     spiceLevel: "Hot",
     prepTime: "20–30 min",
     badge: "Bold flavor",
-    available: true
+    available: true,
+    imageUrl: ""
   },
   {
     id: "jollof-rice-plate",
@@ -57,7 +60,8 @@ export const menuItems: MenuItem[] = [
     spiceLevel: "Medium",
     prepTime: "20–25 min",
     badge: "Comfort side",
-    available: true
+    available: true,
+    imageUrl: ""
   },
   {
     id: "herb-butter-rice",
@@ -68,7 +72,8 @@ export const menuItems: MenuItem[] = [
     spiceLevel: "Mild",
     prepTime: "20–25 min",
     badge: "Smooth balance",
-    available: true
+    available: true,
+    imageUrl: ""
   },
   {
     id: "chicken-fries-combo",
@@ -79,7 +84,8 @@ export const menuItems: MenuItem[] = [
     spiceLevel: "Medium",
     prepTime: "15–25 min",
     badge: "Quick craving",
-    available: true
+    available: true,
+    imageUrl: ""
   },
   {
     id: "jerk-chicken",
@@ -90,7 +96,8 @@ export const menuItems: MenuItem[] = [
     spiceLevel: "Extra Hot",
     prepTime: "25–35 min",
     badge: "Smoky heat",
-    available: true
+    available: true,
+    imageUrl: ""
   }
 ];
 
