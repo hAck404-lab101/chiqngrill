@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Banknote, Bike, Check, CreditCard, HandCoins, MapPin, Package, ShoppingBag, Store, Utensils } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 import { CTAButton } from "@/components/cta-button";
-import { CalendarIcon, CashIcon, CartIcon, CheckIcon, MobileMoneyIcon, TrackIcon } from "@/components/icons";
 import { clearCart, getCartItems, getCartSubtotal, updateCartItemQuantity, type CartItem } from "@/lib/cart";
 import { createOrder } from "@/lib/api-client";
 
@@ -13,23 +13,18 @@ const paymentMethods = ["Pay at restaurant", "Mobile Money on delivery", "Mobile
 type OrderMode = (typeof orderModes)[number];
 type PaymentMethod = (typeof paymentMethods)[number];
 
-function getPaymentIcon(method: string) {
-  if (method.toLowerCase().includes("mobile money")) return <MobileMoneyIcon className="size-5" />;
-  return <CashIcon className="size-5" />;
+function getPaymentMeta(method: string) {
+  if (method === "Pay at restaurant") return { label: "Counter", hint: "Pay when you arrive", icon: Store };
+  if (method === "Mobile Money on delivery") return { label: "MoMo Delivery", hint: "Pay when rider arrives", icon: CreditCard };
+  if (method === "Mobile Money after confirmation") return { label: "MoMo Confirm", hint: "Restaurant confirms first", icon: HandCoins };
+  return { label: "Cash Delivery", hint: "Cash on arrival", icon: Banknote };
 }
 
-function shortPaymentLabel(method: string) {
-  if (method === "Pay at restaurant") return "At counter";
-  if (method === "Mobile Money on delivery") return "MoMo delivery";
-  if (method === "Mobile Money after confirmation") return "MoMo confirm";
-  if (method === "Cash on delivery") return "Cash delivery";
-  return method;
-}
-
-function getModeIcon(mode: string) {
-  if (mode === "Delivery") return <TrackIcon className="size-4" />;
-  if (mode === "Dine-in") return <CalendarIcon className="size-4" />;
-  return <CartIcon className="size-4" />;
+function getModeMeta(mode: string) {
+  if (mode === "Delivery") return { label: "Delivery", icon: Bike };
+  if (mode === "Dine-in") return { label: "Dine", icon: Utensils };
+  if (mode === "Kerbside Pickup") return { label: "Kerbside", icon: MapPin };
+  return { label: "Pickup", icon: Package };
 }
 
 export default function OrderPage() {
@@ -161,26 +156,37 @@ export default function OrderPage() {
 
         <div className="store-panel p-4 md:p-5">
           <h2 className="text-2xl font-black">Checkout</h2>
-          <p className="mt-1 text-sm font-semibold text-[var(--muted)]">Tap your service and payment option.</p>
+          <p className="mt-1 text-sm font-semibold text-[var(--muted)]">Select how you want to receive and pay.</p>
 
           <div className="mt-4 grid grid-cols-4 gap-2">
-            {orderModes.map((mode) => (
-              <button key={mode} type="button" onClick={() => setOrderMode(mode)} className={`grid place-items-center gap-1 rounded-2xl px-2 py-3 text-[10px] font-black sm:text-xs ${orderMode === mode ? "bg-[var(--dark)] text-white" : "bg-[var(--soft)] text-[var(--ink)]"}`}>
-                {getModeIcon(mode)}
-                <span className="line-clamp-1">{mode.replace("Kerbside Pickup", "Kerbside")}</span>
-              </button>
-            ))}
+            {orderModes.map((mode) => {
+              const meta = getModeMeta(mode);
+              const Icon = meta.icon;
+              const active = orderMode === mode;
+              return (
+                <button key={mode} type="button" onClick={() => setOrderMode(mode)} className={`grid place-items-center gap-1 rounded-2xl border px-2 py-3 text-[10px] font-black transition sm:text-xs ${active ? "border-[var(--dark)] bg-[var(--dark)] text-white" : "border-[var(--line)] bg-white text-[var(--muted)]"}`}>
+                  <Icon size={18} strokeWidth={active ? 2.6 : 2.1} />
+                  <span>{meta.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="mt-5 rounded-3xl bg-[var(--paper)] p-3">
+          <div className="mt-5">
             <p className="text-sm font-black">Payment</p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {availablePaymentMethods.map((method) => (
-                <button key={method} type="button" onClick={() => setPaymentMethod(method)} className={`grid min-h-[86px] place-items-center gap-2 rounded-2xl px-2 py-3 text-center text-xs font-black ${paymentMethod === method ? "bg-[var(--brand)] text-white" : "bg-white text-[var(--ink)] ring-1 ring-[var(--line)]"}`}>
-                  {getPaymentIcon(method)}
-                  <span>{shortPaymentLabel(method)}</span>
-                </button>
-              ))}
+            <div className="mt-3 grid gap-2">
+              {availablePaymentMethods.map((method) => {
+                const meta = getPaymentMeta(method);
+                const Icon = meta.icon;
+                const active = paymentMethod === method;
+                return (
+                  <button key={method} type="button" onClick={() => setPaymentMethod(method)} className={`flex items-center gap-3 rounded-2xl border p-3 text-left transition ${active ? "border-[var(--brand)] bg-[#fff3e8]" : "border-[var(--line)] bg-white"}`}>
+                    <span className={`grid size-10 shrink-0 place-items-center rounded-full ${active ? "bg-[var(--brand)] text-white" : "bg-[var(--paper)] text-[var(--muted)]"}`}><Icon size={19} strokeWidth={2.25} /></span>
+                    <span className="min-w-0 flex-1"><span className="block text-sm font-black text-[var(--ink)]">{meta.label}</span><span className="mt-0.5 block text-xs font-semibold text-[var(--muted)]">{meta.hint}</span></span>
+                    <span className={`grid size-5 place-items-center rounded-full border ${active ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[var(--line)] text-transparent"}`}><Check size={13} strokeWidth={3} /></span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -192,18 +198,17 @@ export default function OrderPage() {
           </div>
 
           {error ? <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
-
           <button type="button" onClick={handleSubmitOrder} disabled={isSubmitting || isCartEmpty} className="btn-primary mt-5 w-full disabled:opacity-50">{isSubmitting ? "Submitting..." : "Place Order"}</button>
         </div>
       </section>
 
       {createdReference ? (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/45 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/45 px-4">
           <div className="w-full max-w-sm rounded-[32px] bg-white p-6 text-center shadow-[0_30px_90px_rgba(0,0,0,0.25)]">
-            <span className="mx-auto grid size-16 place-items-center rounded-full bg-green-100 text-green-700"><CheckIcon className="size-8" /></span>
+            <span className="mx-auto grid size-16 place-items-center rounded-full bg-green-100 text-green-700"><Check size={34} strokeWidth={3} /></span>
             <h2 className="mt-5 text-3xl font-black">Order placed</h2>
             <p className="mt-2 text-sm font-semibold leading-6 text-[var(--muted)]">Your order was sent successfully. Use this reference to track it.</p>
-            <div className="mt-5 rounded-3xl bg-green-50 p-4 text-green-900"><p className="text-xs font-black uppercase tracking-[0.12em]">Reference</p><p className="mt-1 text-2xl font-black">{createdReference}</p><p className="mt-2 text-xs font-bold">{shortPaymentLabel(paymentMethod)}</p></div>
+            <div className="mt-5 rounded-3xl bg-green-50 p-4 text-green-900"><p className="text-xs font-black uppercase tracking-[0.12em]">Reference</p><p className="mt-1 text-2xl font-black">{createdReference}</p><p className="mt-2 text-xs font-bold">{getPaymentMeta(paymentMethod).label}</p></div>
             <div className="mt-5 grid gap-2">
               <a href={`/track?ref=${encodeURIComponent(createdReference)}`} className="btn-primary">Track Order</a>
               <button type="button" onClick={() => setCreatedReference("")} className="btn-outline">Close</button>
