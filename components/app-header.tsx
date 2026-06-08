@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { restaurant } from "@/lib/restaurant-data";
 
 type AppHeaderProps = {
@@ -18,28 +18,13 @@ const customerLinks = [
 const adminLinks = [
   { label: "Admin", href: "/admin" },
   { label: "Kitchen", href: "/kitchen" },
-  { label: "Menu", href: "/menu" },
-  { label: "Orders", href: "/order" }
+  { label: "Menu", href: "/admin/menu" },
+  { label: "Orders", href: "/admin/orders" }
 ];
 
-function getPathAndQuery(href: string) {
-  const [path = "/", query = ""] = href.split("?");
-  return { path, query };
-}
-
-function queryContainsRequiredParams(currentQuery: URLSearchParams, requiredQuery: string) {
-  if (!requiredQuery) return true;
-  const requiredParams = new URLSearchParams(requiredQuery);
-  for (const [key, value] of requiredParams.entries()) {
-    if (currentQuery.get(key) !== value) return false;
-  }
-  return true;
-}
-
-function isActivePath(pathname: string, searchParams: URLSearchParams, href: string) {
-  const { path, query } = getPathAndQuery(href);
-  const matchesPath = path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
-  return matchesPath && queryContainsRequiredParams(searchParams, query);
+function isActivePath(pathname: string, href: string) {
+  const path = href.split("?")[0] || "/";
+  return path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
 }
 
 function CartIcon() {
@@ -56,8 +41,6 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
   const isAdmin = variant === "admin";
   const links = isAdmin ? adminLinks : customerLinks;
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeSearchParams = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -73,7 +56,7 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
 
         <div className="hidden items-center gap-1 text-sm lg:flex">
           {links.map((link) => {
-            const active = isActivePath(pathname, activeSearchParams, link.href);
+            const active = isActivePath(pathname, link.href);
             return (
               <a key={link.href} href={link.href} className={`rounded-full px-4 py-2 font-bold transition ${active ? "bg-[var(--dark)] text-white" : "text-[var(--muted)] hover:bg-[var(--soft)] hover:text-[var(--ink)]"}`}>
                 {link.label}
@@ -86,11 +69,7 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
           <a href={isAdmin ? "/kitchen" : "/order"} className={`${isAdmin ? "rounded-full bg-[var(--dark)] px-4 py-2.5 text-sm font-black text-white" : "grid size-11 place-items-center rounded-2xl bg-[var(--dark)] text-white shadow-[var(--shadow-card)]"}`} aria-label={isAdmin ? "Open kitchen" : "Open cart"} title={isAdmin ? "Kitchen" : "Cart"}>
             {isAdmin ? "Kitchen" : <CartIcon />}
           </a>
-          {!isAdmin ? (
-            <a href={restaurant.phoneHref} className="btn-primary hidden px-5 py-2.5 text-sm md:inline-flex">
-              Call
-            </a>
-          ) : null}
+          {!isAdmin ? <a href={restaurant.phoneHref} className="btn-primary hidden px-5 py-2.5 text-sm md:inline-flex">Call</a> : null}
           <button type="button" onClick={() => setIsOpen((value) => !value)} className="rounded-full bg-[var(--surface)] px-4 py-2.5 text-sm font-bold text-[var(--ink)] shadow-sm ring-1 ring-[var(--line)] lg:hidden" aria-expanded={isOpen} aria-label="Toggle navigation menu">
             {isOpen ? "Close" : "Menu"}
           </button>
@@ -101,7 +80,7 @@ export function AppHeader({ variant = "customer" }: AppHeaderProps) {
         <div className="min-h-0">
           <div className={`mb-4 mt-2 grid gap-2 rounded-3xl bg-[var(--surface)] p-3 shadow-[var(--shadow-soft)] ring-1 ring-[var(--line)] transition duration-300 ${isOpen ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"}`}>
             {links.map((link) => {
-              const active = isActivePath(pathname, activeSearchParams, link.href);
+              const active = isActivePath(pathname, link.href);
               return (
                 <a key={link.href} href={link.href} onClick={() => setIsOpen(false)} className={`rounded-2xl px-4 py-3 text-sm font-bold ${active ? "bg-[var(--dark)] text-white" : "text-[var(--ink)] hover:bg-[var(--soft)]"}`}>
                   {link.label}
