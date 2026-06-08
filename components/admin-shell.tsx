@@ -10,6 +10,8 @@ const links = [
   { label: "Menu", href: "/admin/menu" },
   { label: "Gallery", href: "/admin/gallery" },
   { label: "Homepage", href: "/admin/homepage" },
+  { label: "Operations", href: "/admin/operations" },
+  { label: "Audit Logs", href: "/admin/audit-logs" },
   { label: "Settings", href: "/admin/settings" }
 ];
 
