@@ -1,5 +1,5 @@
 const express = require('express');
-const { restaurant, menuItems, galleryItems, homepageContent, orders, reservations, saveData } = require('../../data/seed');
+const { restaurant, settings, menuItems, galleryItems, homepageContent, orders, reservations, auditLogs, addAuditLog, saveData } = require('../../data/seed');
 const { createAdminToken, requireAdmin, validateAdminLogin, getAdminConfig } = require('../utils/adminAuth');
 
 const router = express.Router();
@@ -70,7 +70,7 @@ router.get('/setup-status', (req, res) => {
 });
 
 router.get('/dashboard', requireAdmin, (req, res) => {
-  const revenue = orders.reduce((total, order) => total + order.subtotal, 0);
+  const revenue = orders.reduce((total, order) => total + Number(order.total || order.subtotal || 0), 0);
 
   res.json({
     success: true,
@@ -85,7 +85,8 @@ router.get('/dashboard', requireAdmin, (req, res) => {
       recentOrders: orders.slice(0, 8),
       recentReservations: reservations.slice(0, 8),
       homepageContent,
-      restaurant
+      restaurant,
+      settings
     }
   });
 });
@@ -116,6 +117,7 @@ router.post('/menu', requireAdmin, (req, res) => {
 
   menuItems.unshift(item);
   saveData();
+  addAuditLog('menu.created', req.admin.email, { itemId: item.id, name: item.name });
   res.status(201).json({ success: true, message: 'Menu item added', data: item });
 });
 
@@ -129,6 +131,7 @@ router.patch('/menu/:id', requireAdmin, (req, res) => {
   });
 
   saveData();
+  addAuditLog('menu.updated', req.admin.email, { itemId: item.id, name: item.name });
   res.json({ success: true, message: 'Menu item updated', data: item });
 });
 
@@ -138,6 +141,7 @@ router.delete('/menu/:id', requireAdmin, (req, res) => {
 
   const [deleted] = menuItems.splice(index, 1);
   saveData();
+  addAuditLog('menu.deleted', req.admin.email, { itemId: deleted.id, name: deleted.name });
   res.json({ success: true, message: 'Menu item deleted', data: deleted });
 });
 
@@ -160,6 +164,7 @@ router.post('/gallery', requireAdmin, (req, res) => {
 
   galleryItems.unshift(item);
   saveData();
+  addAuditLog('gallery.created', req.admin.email, { itemId: item.id, title: item.title });
   res.status(201).json({ success: true, message: 'Gallery item added', data: item });
 });
 
@@ -169,6 +174,7 @@ router.patch('/gallery/:id', requireAdmin, (req, res) => {
 
   Object.assign(item, req.body);
   saveData();
+  addAuditLog('gallery.updated', req.admin.email, { itemId: item.id, title: item.title });
   res.json({ success: true, message: 'Gallery item updated', data: item });
 });
 
@@ -179,17 +185,32 @@ router.get('/homepage', requireAdmin, (req, res) => {
 router.patch('/homepage', requireAdmin, (req, res) => {
   Object.assign(homepageContent, req.body);
   saveData();
+  addAuditLog('homepage.updated', req.admin.email, { fields: Object.keys(req.body || {}) });
   res.json({ success: true, message: 'Homepage content updated', data: homepageContent });
 });
 
 router.get('/settings', requireAdmin, (req, res) => {
-  res.json({ success: true, data: restaurant });
+  res.json({ success: true, data: { restaurant, settings } });
 });
 
 router.patch('/settings', requireAdmin, (req, res) => {
-  Object.assign(restaurant, req.body);
+  const { restaurant: restaurantPayload, settings: settingsPayload, ...legacyRestaurantPayload } = req.body || {};
+
+  if (restaurantPayload && typeof restaurantPayload === 'object') Object.assign(restaurant, restaurantPayload);
+  if (Object.keys(legacyRestaurantPayload).length > 0) Object.assign(restaurant, legacyRestaurantPayload);
+  if (settingsPayload && typeof settingsPayload === 'object') {
+    Object.assign(settings, settingsPayload);
+    if (settingsPayload.businessHours) Object.assign(settings.businessHours, settingsPayload.businessHours);
+    if (Array.isArray(settingsPayload.deliveryZones)) settings.deliveryZones = settingsPayload.deliveryZones;
+  }
+
   saveData();
-  res.json({ success: true, message: 'Settings updated', data: restaurant });
+  addAuditLog('settings.updated', req.admin.email, { restaurantFields: Object.keys(restaurantPayload || legacyRestaurantPayload || {}), settingsFields: Object.keys(settingsPayload || {}) });
+  res.json({ success: true, message: 'Settings updated', data: { restaurant, settings } });
+});
+
+router.get('/audit-logs', requireAdmin, (req, res) => {
+  res.json({ success: true, data: auditLogs.slice(0, 250) });
 });
 
 router.get('/orders', requireAdmin, (req, res) => {
@@ -205,9 +226,11 @@ router.patch('/orders/:reference/status', requireAdmin, (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid order status' });
   }
 
+  const oldStatus = order.status;
   order.status = status;
   order.updatedAt = new Date().toISOString();
   saveData();
+  addAuditLog('order.status_changed', req.admin.email, { reference: order.reference, from: oldStatus, to: status });
 
   res.json({ success: true, message: 'Order status updated', data: order });
 });
@@ -216,9 +239,11 @@ router.post('/orders/:reference/move-forward', requireAdmin, (req, res) => {
   const order = findOrderByReference(req.params.reference);
   if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
+  const oldStatus = order.status;
   order.status = getNextOrderStatus(order.status);
   order.updatedAt = new Date().toISOString();
   saveData();
+  addAuditLog('order.moved_forward', req.admin.email, { reference: order.reference, from: oldStatus, to: order.status });
 
   res.json({ success: true, message: 'Order moved forward', data: order });
 });
@@ -236,9 +261,11 @@ router.patch('/reservations/:reference/status', requireAdmin, (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid reservation status' });
   }
 
+  const oldStatus = reservation.status;
   reservation.status = status;
   reservation.updatedAt = new Date().toISOString();
   saveData();
+  addAuditLog('reservation.status_changed', req.admin.email, { reference: reservation.reference, from: oldStatus, to: status });
 
   res.json({ success: true, message: 'Reservation status updated', data: reservation });
 });
@@ -247,6 +274,7 @@ router.post('/reset-demo', requireAdmin, (req, res) => {
   orders.splice(0, orders.length);
   reservations.splice(0, reservations.length);
   saveData();
+  addAuditLog('system.demo_reset', req.admin.email, {});
   res.json({ success: true, message: 'Demo orders and reservations cleared' });
 });
 
