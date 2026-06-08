@@ -7,7 +7,7 @@ import { fetchHomepageContent, updateHomepageContent } from "@/lib/admin-api";
 
 export default function AdminHomepagePage() {
   const router = useRouter();
-  const [form, setForm] = useState({ heroTitle: "", heroSubtitle: "", featuredMealId: "", heroImageUrl: "", announcement: "" });
+  const [form, setForm] = useState({ heroTitle: "", heroSubtitle: "", featuredMealId: "", heroImageUrl: "", reservationImageUrl: "", announcement: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +22,7 @@ export default function AdminHomepagePage() {
           heroSubtitle: data.heroSubtitle || "",
           featuredMealId: data.featuredMealId || "",
           heroImageUrl: data.heroImageUrl || "",
+          reservationImageUrl: data.reservationImageUrl || "",
           announcement: data.announcement || ""
         });
       } catch (err) {
@@ -62,7 +63,10 @@ export default function AdminHomepagePage() {
             <label className="grid gap-2 text-sm font-black">Announcement<input value={form.announcement} onChange={(e) => setForm({ ...form, announcement: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" /></label>
             <label className="grid gap-2 text-sm font-black">Featured meal ID<input value={form.featuredMealId} onChange={(e) => setForm({ ...form, featuredMealId: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" /></label>
           </div>
-          <label className="grid gap-2 text-sm font-black">Hero image URL<input value={form.heroImageUrl} onChange={(e) => setForm({ ...form, heroImageUrl: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" /></label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2 text-sm font-black">Hero image URL<input value={form.heroImageUrl} onChange={(e) => setForm({ ...form, heroImageUrl: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" /></label>
+            <label className="grid gap-2 text-sm font-black">Reservation image URL<input value={form.reservationImageUrl} onChange={(e) => setForm({ ...form, reservationImageUrl: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" /></label>
+          </div>
         </div>
         <button disabled={isSaving} className="mt-5 rounded-full bg-[#d86b2b] px-6 py-4 font-black text-white disabled:opacity-60">{isSaving ? "Saving..." : "Save Homepage"}</button>
       </form>

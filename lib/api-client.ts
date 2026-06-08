@@ -28,6 +28,7 @@ export type HomepageContent = {
   heroSubtitle: string;
   featuredMealId: string;
   heroImageUrl: string;
+  reservationImageUrl: string;
   announcement: string;
 };
 
@@ -107,7 +108,7 @@ export async function fetchRestaurant() {
   }
 }
 
-export async function fetchHomepageContent() {
+export async function fetchHomepageContent(): Promise<HomepageContent> {
   try {
     return await apiFetch<HomepageContent>("/menu/homepage");
   } catch {
@@ -116,6 +117,7 @@ export async function fetchHomepageContent() {
       heroSubtitle: "Browse the menu, add your meal, choose pickup or delivery, and send your order to Chiq-N-Grill.",
       featuredMealId: "breaded-buttered-combo",
       heroImageUrl: "",
+      reservationImageUrl: "",
       announcement: "Open from 11 AM"
     };
   }
@@ -228,7 +230,7 @@ export async function updateAdminHomepage(token: string, payload: Record<string,
   });
 }
 
-export async function updateAdminSettings(token: string, payload: Record<string, string>) {
+export async function updateAdminSettings(token: string, payload: Record<string, unknown>) {
   return apiFetch("/admin/settings", {
     method: "PATCH",
     headers: authHeaders(token),

@@ -17,6 +17,7 @@ export type AdminDashboard = {
     heroSubtitle: string;
     featuredMealId: string;
     heroImageUrl: string;
+    reservationImageUrl: string;
     announcement: string;
   };
   restaurant: Record<string, string | string[]>;
@@ -213,8 +214,8 @@ export async function fetchSiteSettings() {
   return adminFetch<Record<string, string | string[]>>("/admin/settings");
 }
 
-export async function updateSiteSettings(payload: Record<string, string>) {
-  return adminFetch<Record<string, string>>("/admin/settings", {
+export async function updateSiteSettings(payload: Record<string, unknown>) {
+  return adminFetch<Record<string, unknown>>("/admin/settings", {
     method: "PATCH",
     body: JSON.stringify(payload)
   });
