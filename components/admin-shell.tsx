@@ -11,7 +11,7 @@ const links = [
   { label: "Gallery", href: "/admin/gallery" },
   { label: "Homepage", href: "/admin/homepage" },
   { label: "Operations", href: "/admin/operations" },
-  { label: "Audit Logs", href: "/admin/audit-logs" },
+  { label: "Audit", href: "/admin/audit" },
   { label: "Settings", href: "/admin/settings" }
 ];
 
