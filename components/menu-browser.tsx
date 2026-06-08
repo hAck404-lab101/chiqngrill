@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AddToCartButton } from "@/components/add-to-cart-button";
+import { resolvePublicAssetUrl } from "@/lib/api-client";
 import type { MenuItem } from "@/lib/restaurant-data";
 
 const spiceFilters = ["All", "Mild", "Medium", "Hot", "Extra Hot"] as const;
@@ -20,10 +21,15 @@ type MenuBrowserProps = {
   categories: string[];
 };
 
+function safeText(value: unknown) {
+  return String(value || "");
+}
+
 function matchesPriceFilter(item: MenuItem, filter: PriceFilter) {
-  if (filter === "under-70") return item.priceFrom < 70;
-  if (filter === "70-80") return item.priceFrom >= 70 && item.priceFrom <= 80;
-  if (filter === "above-80") return item.priceFrom > 80;
+  const price = Number(item.priceFrom || 0);
+  if (filter === "under-70") return price < 70;
+  if (filter === "70-80") return price >= 70 && price <= 80;
+  if (filter === "above-80") return price > 80;
   return true;
 }
 
@@ -37,12 +43,12 @@ export function MenuBrowser({ items, categories }: MenuBrowserProps) {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     return items.filter((item) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        item.name.toLowerCase().includes(normalizedSearch) ||
-        item.description.toLowerCase().includes(normalizedSearch) ||
-        item.category.toLowerCase().includes(normalizedSearch);
+      const name = safeText(item.name).toLowerCase();
+      const description = safeText(item.description).toLowerCase();
+      const category = safeText(item.category).toLowerCase();
+      const badge = safeText(item.badge).toLowerCase();
 
+      const matchesSearch = !normalizedSearch || name.includes(normalizedSearch) || description.includes(normalizedSearch) || category.includes(normalizedSearch) || badge.includes(normalizedSearch);
       const matchesCategory = categoryFilter === "All" || item.category === categoryFilter;
       const matchesSpice = spiceFilter === "All" || item.spiceLevel === spiceFilter;
 
@@ -60,14 +66,7 @@ export function MenuBrowser({ items, categories }: MenuBrowserProps) {
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
           {["All", ...categories].map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setCategoryFilter(category)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition ${
-                categoryFilter === category ? "bg-[var(--dark)] text-white" : "bg-[var(--soft)] text-[var(--ink)]"
-              }`}
-            >
+            <button key={category} type="button" onClick={() => setCategoryFilter(category)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition ${categoryFilter === category ? "bg-[var(--dark)] text-white" : "bg-[var(--soft)] text-[var(--ink)]"}`}>
               {category}
             </button>
           ))}
@@ -98,24 +97,27 @@ export function MenuBrowser({ items, categories }: MenuBrowserProps) {
         </div>
       ) : (
         <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredItems.map((item) => (
-            <article key={item.id} className="surface overflow-hidden p-3">
-              <div className="food-tile" />
-              <div className="p-2 pt-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="pill">{item.category}</p>
-                  <p className="text-sm font-black text-[var(--brand-dark)]">GH₵{item.priceFrom}+</p>
+          {filteredItems.map((item) => {
+            const imageUrl = resolvePublicAssetUrl(item.imageUrl);
+            return (
+              <article key={item.id} className="surface overflow-hidden p-3">
+                {imageUrl ? <img src={imageUrl} alt={item.name} className="h-[180px] w-full rounded-[20px] object-cover" /> : <div className="food-tile" />}
+                <div className="p-2 pt-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="pill">{item.category}</p>
+                    <p className="text-sm font-black text-[var(--brand-dark)]">GH₵{item.priceFrom}+</p>
+                  </div>
+                  <h3 className="mt-3 text-xl font-black leading-tight">{item.name}</h3>
+                  <p className="mt-2 min-h-12 text-sm font-medium leading-6 text-[var(--muted)]">{item.description}</p>
+                  <div className="mt-3 flex items-center justify-between text-xs font-bold text-[var(--muted)]">
+                    <span>{item.spiceLevel}</span>
+                    <span>{item.prepTime}</span>
+                  </div>
+                  <AddToCartButton item={item} />
                 </div>
-                <h3 className="mt-3 text-xl font-black leading-tight">{item.name}</h3>
-                <p className="mt-2 min-h-12 text-sm font-medium leading-6 text-[var(--muted)]">{item.description}</p>
-                <div className="mt-3 flex items-center justify-between text-xs font-bold text-[var(--muted)]">
-                  <span>{item.spiceLevel}</span>
-                  <span>{item.prepTime}</span>
-                </div>
-                <AddToCartButton item={item} />
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
     </section>
