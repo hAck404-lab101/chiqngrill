@@ -53,6 +53,7 @@ const defaultData = {
     heroSubtitle: 'Browse the menu, add your meal, choose pickup or delivery, and send your order to Chiq-N-Grill.',
     featuredMealId: 'breaded-buttered-combo',
     heroImageUrl: '',
+    reservationImageUrl: '',
     announcement: 'Open from 11 AM'
   },
   orders: [],
