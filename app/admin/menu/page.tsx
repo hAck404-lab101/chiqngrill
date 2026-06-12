@@ -213,14 +213,14 @@ export default function AdminMenuPage() {
       </section>
 
       {isModalOpen ? (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/45 px-4 py-5 backdrop-blur-sm sm:py-8">
-          <div className="mx-auto max-w-2xl rounded-[30px] bg-white p-4 shadow-[0_30px_90px_rgba(0,0,0,0.25)] sm:p-6">
-            <div className="flex items-start justify-between gap-4">
+        <div className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/50 px-4 py-6 backdrop-blur-sm">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[30px] bg-white p-4 shadow-[0_30px_90px_rgba(0,0,0,0.25)] sm:p-6">
+            <div className="sticky top-0 z-10 -mx-4 -mt-4 flex items-start justify-between gap-4 rounded-t-[30px] bg-white px-4 pb-4 pt-4 sm:-mx-6 sm:-mt-6 sm:px-6 sm:pt-6">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-[#9d431f]">{editingId ? "Edit menu" : "New menu"}</p>
                 <h2 className="mt-2 text-2xl font-black">{editingId ? "Edit meal" : "Add meal"}</h2>
               </div>
-              <button type="button" onClick={closeModal} className="grid size-10 place-items-center rounded-full bg-[#fff8ef] text-xl font-black">×</button>
+              <button type="button" onClick={closeModal} className="grid size-10 shrink-0 place-items-center rounded-full bg-[#fff8ef] text-xl font-black">×</button>
             </div>
 
             {modalError ? <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{modalError}</p> : null}
@@ -249,7 +249,7 @@ export default function AdminMenuPage() {
               <input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} className="rounded-2xl border border-black/10 bg-[#fff8ef] px-4 py-3" placeholder="Image URL" />
               <label className="flex items-center gap-3 rounded-2xl bg-[#fff8ef] p-4 text-sm font-black"><input type="checkbox" checked={form.available} onChange={(e) => setForm({ ...form, available: e.target.checked })} />Available on menu</label>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sticky bottom-0 -mx-4 -mb-4 grid gap-3 border-t border-black/10 bg-white p-4 sm:-mx-6 sm:-mb-6 sm:grid-cols-2 sm:p-6">
                 <button type="button" onClick={closeModal} className="rounded-full bg-[#efe0d0] px-5 py-4 font-black text-[#16110d]">Cancel</button>
                 <button type="submit" disabled={isSaving || isUploading} className="rounded-full bg-[#d86b2b] px-5 py-4 font-black text-white disabled:opacity-60">{isSaving ? "Saving..." : editingId ? "Save Changes" : "Add Meal"}</button>
               </div>
